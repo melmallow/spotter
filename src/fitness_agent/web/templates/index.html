@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Future Coach</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet"
+  />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            navy: '#0B1A2E',
+            'navy-soft': '#13243a',
+            teal: '#14B8A6',
+            'teal-soft': '#A7F0E6',
+            surface: '#F8F9FB',
+            ink: '#1F2937',
+            muted: '#6B7280',
+          },
+          fontFamily: {
+            sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+          },
+        },
+      },
+    };
+  </script>
+  <style>
+    html, body { font-family: 'Inter', system-ui, sans-serif; background: #F8F9FB; }
+    .bubble-user { background: #14B8A6; color: white; }
+    .bubble-agent { background: white; color: #1F2937; border: 1px solid #E5E7EB; }
+    .bubble-error { background: #FEF2F2; color: #7F1D1D; border: 1px solid #FCA5A5; }
+    /* Preserve newlines in agent responses so the workout layout reads cleanly */
+    .bubble-agent, .bubble-error { white-space: pre-wrap; }
+    .pulse-dot::after {
+      content: '';
+      display: inline-block;
+      width: 6px; height: 6px;
+      background: currentColor; border-radius: 50%;
+      animation: pulse 1.2s infinite ease-in-out;
+      margin-left: 6px;
+    }
+    @keyframes pulse {
+      0%, 80%, 100% { opacity: 0.2; }
+      40% { opacity: 1; }
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col">
+  <header class="bg-navy text-white">
+    <div class="max-w-3xl mx-auto px-4 md:px-8 py-4 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 rounded-lg bg-teal flex items-center justify-center font-bold">F</div>
+        <span class="font-semibold tracking-tight">Future Coach</span>
+      </div>
+      <span class="text-xs text-teal-soft uppercase tracking-widest">Multi-Agent Demo</span>
+    </div>
+  </header>
+
+  <main class="flex-1 px-4 md:px-8 py-10">
+    <section class="max-w-3xl mx-auto">
+      <h1 class="text-3xl md:text-5xl font-extrabold tracking-tight text-navy">
+        Your AI fitness coach.
+      </h1>
+      <p class="mt-3 text-muted text-lg">
+        Ask about exercises, build a workout, or log a session — three specialized agents, one chat.
+      </p>
+
+      <div
+        id="chat"
+        class="mt-8 bg-white rounded-2xl shadow-sm border border-gray-200 p-5 md:p-7 min-h-[320px] flex flex-col gap-3"
+        aria-live="polite"
+        aria-label="Conversation history"
+      >
+        <div class="bubble-agent rounded-xl px-4 py-3 max-w-[85%] self-start">
+          Hey — I'm Future Coach. Try asking what muscles a deadlift works, asking
+          me to build a 30-minute upper-body workout, or logging a set you just
+          finished.
+        </div>
+      </div>
+
+      <div class="mt-4 flex flex-wrap gap-2" aria-label="Example prompts">
+        <button
+          type="button"
+          class="example-chip px-3 py-1.5 text-sm rounded-full border border-teal text-teal hover:bg-teal hover:text-white transition"
+          data-prompt="What muscles does a Romanian deadlift work?"
+        >Coach a movement</button>
+        <button
+          type="button"
+          class="example-chip px-3 py-1.5 text-sm rounded-full border border-teal text-teal hover:bg-teal hover:text-white transition"
+          data-prompt="Build me a 30 minute upper body workout with dumbbells"
+        >Generate a workout</button>
+        <button
+          type="button"
+          class="example-chip px-3 py-1.5 text-sm rounded-full border border-teal text-teal hover:bg-teal hover:text-white transition"
+          data-prompt="I just did 3x10 bench press at 185 lbs"
+        >Log a set</button>
+      </div>
+
+      <form id="composer" class="mt-6 flex items-stretch gap-3">
+        <label class="sr-only" for="message">Message</label>
+        <input
+          id="message"
+          name="message"
+          type="text"
+          autocomplete="off"
+          required
+          placeholder="Ask, generate, or log…"
+          class="flex-1 rounded-xl border border-gray-300 px-4 py-3 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal"
+        />
+        <button
+          id="send"
+          type="submit"
+          class="rounded-xl bg-teal text-white font-semibold px-5 py-3 hover:bg-teal/90 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal focus-visible:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed"
+        >Send</button>
+      </form>
+      <p id="status" class="mt-2 text-sm text-muted h-5"></p>
+    </section>
+  </main>
+
+  <footer class="text-xs text-muted text-center py-4">
+    Built for the Future Research AI Engineer take-home.
+  </footer>
+
+  <script>
+    const chat = document.getElementById('chat');
+    const composer = document.getElementById('composer');
+    const input = document.getElementById('message');
+    const sendBtn = document.getElementById('send');
+    const status = document.getElementById('status');
+
+    function addBubble(text, kind, routeLabel) {
+      const node = document.createElement('div');
+      node.className = `rounded-xl px-4 py-3 max-w-[85%] ${kind === 'user' ? 'self-end bubble-user' : kind === 'error' ? 'self-start bubble-error' : 'self-start bubble-agent'}`;
+      if (routeLabel) {
+        const tag = document.createElement('div');
+        tag.className = 'text-xs uppercase tracking-widest opacity-60 mb-1';
+        tag.textContent = routeLabel;
+        node.appendChild(tag);
+      }
+      const body = document.createElement('div');
+      body.textContent = text;
+      node.appendChild(body);
+      chat.appendChild(node);
+      chat.scrollTop = chat.scrollHeight;
+      return node;
+    }
+
+    function setLoading(loading) {
+      sendBtn.disabled = loading;
+      input.disabled = loading;
+      sendBtn.textContent = loading ? 'Thinking' : 'Send';
+      sendBtn.classList.toggle('pulse-dot', loading);
+      status.textContent = loading ? 'Coach is thinking…' : '';
+    }
+
+    async function send(message) {
+      addBubble(message, 'user');
+      setLoading(true);
+      try {
+        const res = await fetch('/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message }),
+        });
+        if (!res.ok) {
+          let detail = `Request failed (${res.status}).`;
+          try {
+            const body = await res.json();
+            if (body?.detail) detail = `Request failed: ${JSON.stringify(body.detail)}`;
+          } catch (_) {}
+          addBubble(detail, 'error');
+          return;
+        }
+        const data = await res.json();
+        const tag = data.route ? `${data.route}${typeof data.confidence === 'number' ? ` · ${Math.round(data.confidence * 100)}%` : ''}` : null;
+        addBubble(data.response, 'agent', tag);
+      } catch (err) {
+        addBubble(`Network error: ${err.message}`, 'error');
+      } finally {
+        setLoading(false);
+        input.value = '';
+        input.focus();
+      }
+    }
+
+    composer.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const message = input.value.trim();
+      if (!message) return;
+      send(message);
+    });
+
+    document.querySelectorAll('.example-chip').forEach((chip) => {
+      chip.addEventListener('click', () => {
+        input.value = chip.dataset.prompt;
+        input.focus();
+      });
+    });
+
+    input.focus();
+  </script>
+</body>
+</html>
