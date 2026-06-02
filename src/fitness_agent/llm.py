@@ -23,10 +23,14 @@ def chat_model(tier: Tier = "haiku", temperature: float = 0.0) -> ChatAnthropic:
     - sonnet: quality-dominant generation (coach answers, workout tool-calling).
     """
     model_name = HAIKU_MODEL if tier == "haiku" else SONNET_MODEL
+    # Pass a placeholder when the env var is unset so import-time construction
+    # succeeds; the real failure surfaces on the first API call with a clear
+    # message rather than blocking the entire package from loading.
+    key = ANTHROPIC_API_KEY or "missing-api-key-set-ANTHROPIC_API_KEY-env"
     return ChatAnthropic(
         model=model_name,
         temperature=temperature,
         timeout=LLM_TIMEOUT_SECONDS,
-        api_key=ANTHROPIC_API_KEY or None,
+        api_key=key,
         max_retries=2,
     )
