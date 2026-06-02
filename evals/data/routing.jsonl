@@ -1,0 +1,50 @@
+{"input": "What muscles does a deadlift work?", "expected_route": "COACH", "min_confidence": 0.7}
+{"input": "Build me a 30 minute upper body workout with dumbbells", "expected_route": "WORKOUT_GENERATE", "min_confidence": 0.8}
+{"input": "I just did 3x10 bench press at 185 lbs", "expected_route": "WORKOUT_LOG", "min_confidence": 0.8}
+{"input": "What's the difference between a back squat and a front squat?", "expected_route": "COACH", "min_confidence": 0.7}
+{"input": "Give me a quick leg day, 45 minutes, kettlebell and dumbbell", "expected_route": "WORKOUT_GENERATE", "min_confidence": 0.7}
+{"input": "Log 4x8 overhead press at 95 lbs", "expected_route": "WORKOUT_LOG", "min_confidence": 0.8}
+{"input": "How do I cue someone to brace their core during a lift?", "expected_route": "COACH", "min_confidence": 0.7}
+{"input": "Design a full body session I can do in 20 minutes with no equipment", "expected_route": "WORKOUT_GENERATE", "min_confidence": 0.8}
+{"input": "Did 5x5 squats today, 225 pounds", "expected_route": "WORKOUT_LOG", "min_confidence": 0.7}
+{"input": "Explain progressive overload", "expected_route": "COACH", "min_confidence": 0.7}
+{"input": "I need a chest and triceps workout, dumbbells only, 40 min", "expected_route": "WORKOUT_GENERATE", "min_confidence": 0.8}
+{"input": "Just finished 3 sets of 12 push-ups bodyweight", "expected_route": "WORKOUT_LOG", "min_confidence": 0.7}
+{"input": "Which joints does a Romanian deadlift load?", "expected_route": "COACH", "min_confidence": 0.7}
+{"input": "Build a posterior chain workout, barbell available", "expected_route": "WORKOUT_GENERATE", "min_confidence": 0.7}
+{"input": "Logged: 8 reps strict pull-ups bodyweight", "expected_route": "WORKOUT_LOG", "min_confidence": 0.7}
+{"input": "What does eccentric vs concentric mean?", "expected_route": "COACH", "min_confidence": 0.7}
+{"input": "Give me a back workout for 30 minutes", "expected_route": "WORKOUT_GENERATE", "min_confidence": 0.7}
+{"input": "Did 3 by 10 dumbbell rows at 40 lb each side", "expected_route": "WORKOUT_LOG", "min_confidence": 0.7}
+{"input": "Why do glutes matter for athletes?", "expected_route": "COACH", "min_confidence": 0.7}
+{"input": "Plan me a core workout with no equipment, 15 min", "expected_route": "WORKOUT_GENERATE", "min_confidence": 0.7}
+{"input": "Just hit 4 sets of 6 reps Romanian deadlift at 135", "expected_route": "WORKOUT_LOG", "min_confidence": 0.7}
+{"input": "Form check: are split squats supposed to feel in the front leg?", "expected_route": "COACH", "min_confidence": 0.7}
+{"input": "Build a stability ball ab workout", "expected_route": "WORKOUT_GENERATE", "min_confidence": 0.7}
+{"input": "Completed: 3x12 lateral raise, 15 lbs each side", "expected_route": "WORKOUT_LOG", "min_confidence": 0.7}
+{"input": "How does training frequency affect hypertrophy?", "expected_route": "COACH", "min_confidence": 0.7}
+{"input": "Make me a lower body workout but my knees are sore — avoid those", "expected_route": "WORKOUT_GENERATE", "min_confidence": 0.7}
+{"input": "Just did 5 sets of 5 bench press at 155", "expected_route": "WORKOUT_LOG", "min_confidence": 0.7}
+{"input": "Talk to me about anti-rotation core work", "expected_route": "COACH", "min_confidence": 0.7}
+{"input": "30 minute conditioning workout, kettlebell only", "expected_route": "WORKOUT_GENERATE", "min_confidence": 0.7}
+{"input": "Logged tonight: 4x10 incline DB press at 50 lbs", "expected_route": "WORKOUT_LOG", "min_confidence": 0.7}
+{"input": "Why does grip strength matter for pulling movements?", "expected_route": "COACH", "min_confidence": 0.7}
+{"input": "Design an upper push session around incline bench", "expected_route": "WORKOUT_GENERATE", "min_confidence": 0.7}
+{"input": "I did 6 reps of weighted chin ups at 25 lbs", "expected_route": "WORKOUT_LOG", "min_confidence": 0.7}
+{"input": "What's the role of the lats in a pull-up?", "expected_route": "COACH", "min_confidence": 0.7}
+{"input": "Give me a hip-dominant workout with a barbell", "expected_route": "WORKOUT_GENERATE", "min_confidence": 0.7}
+{"input": "3x12 leg press at 320, done.", "expected_route": "WORKOUT_LOG", "min_confidence": 0.7}
+{"input": "Define unilateral training and why it matters", "expected_route": "COACH", "min_confidence": 0.7}
+{"input": "Build a quick shoulder workout, 20 min, dumbbells", "expected_route": "WORKOUT_GENERATE", "min_confidence": 0.7}
+{"input": "Finished: 4 sets banded lat pulldowns, 12 reps, medium band", "expected_route": "WORKOUT_LOG", "min_confidence": 0.7}
+{"input": "Are rotator cuff exercises worth doing?", "expected_route": "COACH", "min_confidence": 0.7}
+{"input": "Make a workout for someone who only has a pull-up bar and a resistance band", "expected_route": "WORKOUT_GENERATE", "min_confidence": 0.7}
+{"input": "Did 3x10 cable triceps pushdowns at 50 lbs", "expected_route": "WORKOUT_LOG", "min_confidence": 0.7}
+{"input": "What's a good warm-up before heavy squats?", "expected_route": "COACH", "min_confidence": 0.7}
+{"input": "Plan: total body strength session 45 minutes, full gym", "expected_route": "WORKOUT_GENERATE", "min_confidence": 0.8}
+{"input": "Logged 4 by 8 Bulgarian split squats at 30 lbs DBs", "expected_route": "WORKOUT_LOG", "min_confidence": 0.7}
+{"input": "How do I know if my lockout is the weak point on bench?", "expected_route": "COACH", "min_confidence": 0.7}
+{"input": "Build me a full body workout I can finish in 25 minutes", "expected_route": "WORKOUT_GENERATE", "min_confidence": 0.7}
+{"input": "5 sets of 1 deadlift at 405 lbs", "expected_route": "WORKOUT_LOG", "min_confidence": 0.7}
+{"input": "What's the deal with isometric pull-ups?", "expected_route": "COACH", "min_confidence": 0.7}
+{"input": "Give me a 40-minute push day with barbell and dumbbells", "expected_route": "WORKOUT_GENERATE", "min_confidence": 0.7}

@@ -1,0 +1,10 @@
+{"input": "Bench press", "expected_clarification": true}
+{"input": "deadlift", "expected_clarification": true}
+{"input": "Squat", "expected_clarification": true}
+{"input": "I did a workout yesterday, can you adjust it?", "expected_clarification": true}
+{"input": "legs", "expected_clarification": true}
+{"input": "Chest", "expected_clarification": true}
+{"input": "Help me with my routine", "expected_clarification": true}
+{"input": "rest day", "expected_clarification": true}
+{"input": "workout", "expected_clarification": true}
+{"input": "back day", "expected_clarification": true}
