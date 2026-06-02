@@ -20,12 +20,16 @@ from pydantic import BaseModel
 
 
 class FakeStructuredChatModel(FakeMessagesListChatModel):
-    """Fake chat model with overridable structured output + tool binding."""
+    """Fake chat model with overridable structured output + tool binding.
+
+    For tool-calling tests, script the multi-turn conversation via `responses`:
+    each AIMessage in the list is consumed in order — include tool_calls when
+    the model should call a tool, plain content when it should return the
+    final answer.
+    """
 
     structured_responses: list[BaseModel] = []
-    tool_call_responses: list[list[dict[str, Any]]] = []
     _structured_idx: int = 0
-    _tool_idx: int = 0
     raise_on_call: bool = False
 
     def with_structured_output(  # type: ignore[override]
@@ -42,21 +46,17 @@ class FakeStructuredChatModel(FakeMessagesListChatModel):
                     f"No structured_responses scripted for {schema.__name__}"
                 )
             i = self._structured_idx % len(responses)
-            type(self)._structured_idx_setter(self, i + 1)
+            object.__setattr__(self, "_structured_idx", i + 1)
             return responses[i]
 
         return RunnableLambda(_emit)
-
-    @staticmethod
-    def _structured_idx_setter(obj: "FakeStructuredChatModel", val: int) -> None:
-        object.__setattr__(obj, "_structured_idx", val)
 
     def bind_tools(  # type: ignore[override]
         self,
         tools: Sequence[Any],
         **kwargs: Any,
     ) -> "FakeStructuredChatModel":
-        """Return self with the scripted tool_call_responses unchanged."""
+        """Return self — tool-call scripting is via `responses` AIMessages."""
         return self
 
     def _generate(  # type: ignore[override]
@@ -68,18 +68,7 @@ class FakeStructuredChatModel(FakeMessagesListChatModel):
     ):
         if self.raise_on_call:
             raise RuntimeError("scripted LLM failure")
-        if self.tool_call_responses:
-            calls = self.tool_call_responses[self._tool_idx % len(self.tool_call_responses)]
-            type(self)._tool_idx_setter(self, self._tool_idx + 1)
-            msg = AIMessage(content="", tool_calls=calls)
-            from langchain_core.outputs import ChatGeneration, ChatResult
-
-            return ChatResult(generations=[ChatGeneration(message=msg)])
         return super()._generate(messages, stop, run_manager, **kwargs)
-
-    @staticmethod
-    def _tool_idx_setter(obj: "FakeStructuredChatModel", val: int) -> None:
-        object.__setattr__(obj, "_tool_idx", val)
 
 
 @pytest.fixture
@@ -95,14 +84,12 @@ def fake_chat_model_factory():
     def _build(
         *,
         structured: list[BaseModel] | None = None,
-        tool_calls: list[list[dict[str, Any]]] | None = None,
-        raise_on_call: bool = False,
         responses: list[BaseMessage] | None = None,
+        raise_on_call: bool = False,
     ) -> FakeStructuredChatModel:
         return FakeStructuredChatModel(
             responses=responses or [AIMessage(content="")],
             structured_responses=structured or [],
-            tool_call_responses=tool_calls or [],
             raise_on_call=raise_on_call,
         )
 
