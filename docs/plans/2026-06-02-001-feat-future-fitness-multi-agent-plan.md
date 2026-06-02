@@ -1,6 +1,6 @@
 ---
 date: 2026-06-02
-status: active
+status: completed
 type: feat
 topic: future-fitness-multi-agent
 origin: docs/brainstorms/future-fitness-multi-agent-requirements.md
