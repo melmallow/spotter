@@ -1,0 +1,39 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+*.egg
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+dist/
+build/
+
+# Virtualenvs
+.venv/
+venv/
+env/
+
+# uv
+.uv/
+
+# Environment
+.env
+
+# IDE
+.vscode/
+.idea/
+*.swp
+.DS_Store
+
+# Runtime logs
+logs/
+*.log
+
+# Eval results
+evals/results/*.jsonl
+
+# Test artifacts
+.coverage
+htmlcov/
