@@ -60,6 +60,17 @@ class LogEntry(BaseModel):
     exercise_name_raw: str = Field(
         description="The exercise name as the user said it, verbatim."
     )
+    movement_keyword: str | None = Field(
+        default=None,
+        description=(
+            "A single short keyword identifying the kind of movement the user "
+            "named — used to bias the fuzzy-match candidate pool. Pick one of: "
+            "press, row, squat, deadlift, curl, extension, fly, pulldown, "
+            "pull-up, chin-up, push-up, lunge, raise, carry, stretch, plank, "
+            "bridge — or None if no clear keyword applies. Example: 'rows' → "
+            "'row'; 'overhead press' → 'press'; 'RDLs' → 'deadlift'."
+        ),
+    )
     sets: int = Field(ge=1, description="Number of sets performed.")
     reps: int = Field(ge=1, description="Number of reps per set.")
     weight: float | None = Field(
