@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from typing import Any
 
-from fitness_agent.logging_setup import get_logger
-from fitness_agent.schemas import HubState
+from spotter.logging_setup import get_logger
+from spotter.schemas import HubState
 
 
 log = get_logger("clarification")

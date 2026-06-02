@@ -10,11 +10,11 @@ from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage, ToolMessage
 from langgraph.graph import END, START, StateGraph
 
-from fitness_agent.llm import chat_model
-from fitness_agent.logging_setup import get_logger
-from fitness_agent.schemas import HubState
-from fitness_agent.tools.build_workout import build_workout
-from fitness_agent.tools.search_exercises import search_exercises
+from spotter.llm import chat_model
+from spotter.logging_setup import get_logger
+from spotter.schemas import HubState
+from spotter.tools.build_workout import build_workout
+from spotter.tools.search_exercises import search_exercises
 
 
 log = get_logger("generator")

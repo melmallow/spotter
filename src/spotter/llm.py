@@ -6,7 +6,7 @@ from typing import Literal
 
 from langchain_anthropic import ChatAnthropic
 
-from fitness_agent.config import (
+from spotter.config import (
     ANTHROPIC_API_KEY,
     HAIKU_MODEL,
     LLM_TIMEOUT_SECONDS,

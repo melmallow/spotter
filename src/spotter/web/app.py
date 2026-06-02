@@ -10,8 +10,8 @@ from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, JSONResponse
 from pydantic import BaseModel, Field
 
-from fitness_agent.hub import build_hub, run_hub
-from fitness_agent.logging_setup import (
+from spotter.hub import build_hub, run_hub
+from spotter.logging_setup import (
     bind_contextvars,
     clear_contextvars,
     configure_logging,
@@ -33,7 +33,7 @@ class ChatRequest(BaseModel):
 
 def create_app() -> FastAPI:
     """Build the FastAPI app with a long-lived hub instance."""
-    app = FastAPI(title="Future Coach", version="0.1.0")
+    app = FastAPI(title="Spotter", version="0.1.0")
     hub = build_hub()
 
     @app.middleware("http")

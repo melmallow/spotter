@@ -1,13 +1,13 @@
-"""CLI entrypoint — `python -m fitness_agent.evals --suite routing|ambiguous|...|all`."""
+"""CLI entrypoint — `python -m spotter.evals --suite routing|ambiguous|...|all`."""
 
 from __future__ import annotations
 
 import argparse
 import sys
 
-from fitness_agent.evals.runner import SUITES, print_summary, run_suite
-from fitness_agent.hub import build_hub
-from fitness_agent.logging_setup import configure_logging
+from spotter.evals.runner import SUITES, print_summary, run_suite
+from spotter.hub import build_hub
+from spotter.logging_setup import configure_logging
 
 
 def main() -> int:

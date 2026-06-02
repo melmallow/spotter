@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from langchain_core.tools import tool
 
-from fitness_agent.data import Dataset, get_dataset
-from fitness_agent.logging_setup import get_logger
-from fitness_agent.schemas import (
+from spotter.data import Dataset, get_dataset
+from spotter.logging_setup import get_logger
+from spotter.schemas import (
     ExerciseSummary,
     SearchExercisesInput,
     SearchExercisesResult,

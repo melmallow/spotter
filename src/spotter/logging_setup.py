@@ -8,7 +8,7 @@ import sys
 import structlog
 from structlog.contextvars import bind_contextvars, clear_contextvars, merge_contextvars
 
-from fitness_agent.config import LOGS_DIR, TRACE_LOG_PATH
+from spotter.config import LOGS_DIR, TRACE_LOG_PATH
 
 
 def configure_logging() -> None:

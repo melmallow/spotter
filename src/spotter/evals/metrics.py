@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from fitness_agent.data import get_dataset
+from spotter.data import get_dataset
 
 
 def routing_accuracy(results: list[dict[str, Any]]) -> dict[str, float]:

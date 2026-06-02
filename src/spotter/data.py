@@ -18,7 +18,7 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
-from fitness_agent.config import EXERCISE_DATA_PATH
+from spotter.config import EXERCISE_DATA_PATH
 
 
 Side = Literal["left_arm", "left_leg", "left_side"] | None

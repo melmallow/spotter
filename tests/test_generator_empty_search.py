@@ -10,16 +10,16 @@ import json
 import pytest
 from langchain_core.messages import AIMessage, ToolMessage
 
-from fitness_agent.agents.generator import build_generator_subgraph
-from fitness_agent.data import get_dataset
-from fitness_agent.logging_setup import (
+from spotter.agents.generator import build_generator_subgraph
+from spotter.data import get_dataset
+from spotter.logging_setup import (
     bind_contextvars,
     clear_contextvars,
     configure_logging,
 )
-from fitness_agent.tools.build_workout import _do_build, _flip_side
-from fitness_agent.tools.search_exercises import _do_search
-from fitness_agent.schemas import (
+from spotter.tools.build_workout import _do_build, _flip_side
+from spotter.tools.search_exercises import _do_search
+from spotter.schemas import (
     BuildWorkoutInput,
     PrescribedExercise,
     SearchExercisesInput,

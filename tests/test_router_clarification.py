@@ -7,13 +7,13 @@ from __future__ import annotations
 
 import pytest
 
-from fitness_agent.agents.router import build_router_subgraph
-from fitness_agent.logging_setup import (
+from spotter.agents.router import build_router_subgraph
+from spotter.logging_setup import (
     bind_contextvars,
     clear_contextvars,
     configure_logging,
 )
-from fitness_agent.schemas import RouteDecision
+from spotter.schemas import RouteDecision
 
 
 configure_logging()

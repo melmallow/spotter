@@ -8,15 +8,15 @@ from typing import Any
 from langchain_core.language_models.chat_models import BaseChatModel
 from langgraph.graph import END, START, StateGraph
 
-from fitness_agent.llm import chat_model
-from fitness_agent.logging_setup import get_logger
-from fitness_agent.schemas import HubState
+from spotter.llm import chat_model
+from spotter.logging_setup import get_logger
+from spotter.schemas import HubState
 
 
 log = get_logger("coach")
 
 
-COACH_SYSTEM_PROMPT = """You are Future Coach, an evidence-informed fitness coach.
+COACH_SYSTEM_PROMPT = """You are Spotter, an evidence-informed fitness coach.
 
 You answer questions about:
 - Exercise anatomy (which muscles, joints, and movement patterns are involved)

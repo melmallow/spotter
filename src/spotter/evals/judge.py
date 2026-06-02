@@ -6,7 +6,7 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
-from fitness_agent.llm import chat_model
+from spotter.llm import chat_model
 
 
 class CoachScore(BaseModel):

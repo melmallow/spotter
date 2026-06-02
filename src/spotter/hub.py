@@ -9,17 +9,17 @@ from typing import Any
 from langgraph.graph import END, START, StateGraph
 from pydantic import ValidationError
 
-from fitness_agent.agents.clarification import clarification_node
-from fitness_agent.agents.coach import build_coach_subgraph
-from fitness_agent.agents.generator import build_generator_subgraph
-from fitness_agent.agents.logger import build_logger_subgraph
-from fitness_agent.agents.router import build_router_subgraph
-from fitness_agent.logging_setup import (
+from spotter.agents.clarification import clarification_node
+from spotter.agents.coach import build_coach_subgraph
+from spotter.agents.generator import build_generator_subgraph
+from spotter.agents.logger import build_logger_subgraph
+from spotter.agents.router import build_router_subgraph
+from spotter.logging_setup import (
     bind_contextvars,
     clear_contextvars,
     get_logger,
 )
-from fitness_agent.schemas import HubState
+from spotter.schemas import HubState
 
 
 log = get_logger("hub")

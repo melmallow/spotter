@@ -10,11 +10,11 @@ from langgraph.graph import END, START, StateGraph
 from pydantic import ValidationError
 from rapidfuzz import fuzz, process, utils
 
-from fitness_agent.config import FUZZY_MATCH_THRESHOLD
-from fitness_agent.data import Dataset, get_dataset
-from fitness_agent.llm import chat_model
-from fitness_agent.logging_setup import get_logger
-from fitness_agent.schemas import HubState, LogEntry
+from spotter.config import FUZZY_MATCH_THRESHOLD
+from spotter.data import Dataset, get_dataset
+from spotter.llm import chat_model
+from spotter.logging_setup import get_logger
+from spotter.schemas import HubState, LogEntry
 
 
 log = get_logger("logger")

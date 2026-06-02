@@ -1,14 +1,14 @@
-# Future Coach — LangGraph Multi-Agent Fitness System
+# Spotter — LangGraph Multi-Agent Fitness System
 
 A LangGraph hub agent that routes user requests across three intents — coach a movement, generate a workout, log a workout — to specialized sub-agents backed by Anthropic Claude and a 50-exercise dataset. Built for the [Future Research AI Engineer take-home](https://github.com/future-research/candidate-assessment/blob/main/1-multi-agent/ASSESSMENT.md).
 
 ## Quick start
 
 ```bash
-git clone <this-repo-url> fitness && cd fitness
+git clone https://github.com/melmallow/Spotter.git && cd Spotter
 cp .env.example .env             # then put your ANTHROPIC_API_KEY in .env
 uv sync --extra dev
-uv run python -m fitness_agent   # serves http://127.0.0.1:8000
+uv run python -m spotter   # serves http://127.0.0.1:8000
 ```
 
 Then open the URL and try the chips below the chat input — one prompt per route.
@@ -24,8 +24,8 @@ Nine deterministic tests across two critical-path test files, no real API calls.
 ## Run the evals
 
 ```bash
-uv run python -m fitness_agent.evals --suite routing   # ~$0.10 of haiku spend
-uv run python -m fitness_agent.evals --suite all       # ~$0.50 full sweep
+uv run python -m spotter.evals --suite routing   # ~$0.10 of haiku spend
+uv run python -m spotter.evals --suite all       # ~$0.50 full sweep
 ```
 
 See `evals/README.md` for what each suite measures and where to record the baseline numbers. The eval suite hits real Claude — `tests/` does not.
@@ -137,7 +137,7 @@ What the system would lose under traffic that v1 doesn't address: real per-user 
 fitness/
 ├── exercises.json                   # 50-exercise dataset (provided)
 ├── pyproject.toml
-├── src/fitness_agent/
+├── src/spotter/
 │   ├── __main__.py                  # launches the FastAPI demo
 │   ├── config.py                    # env vars + thresholds
 │   ├── data.py                      # dataset loader + indexes

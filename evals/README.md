@@ -6,10 +6,10 @@ A real-Claude evaluation suite that turns the README's "How I would evaluate thi
 
 ```bash
 # fast & cheap — routing accuracy only
-uv run python -m fitness_agent.evals --suite routing
+uv run python -m spotter.evals --suite routing
 
 # the full sweep
-uv run python -m fitness_agent.evals --suite all
+uv run python -m spotter.evals --suite all
 ```
 
 Requires `ANTHROPIC_API_KEY` in `.env`. Results land in `evals/results/<suite>-<timestamp>.jsonl` (gitignored).

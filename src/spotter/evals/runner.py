@@ -8,16 +8,16 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Iterator
 
-from fitness_agent.config import REPO_ROOT
-from fitness_agent.evals.judge import judge_coach_response
-from fitness_agent.evals.metrics import (
+from spotter.config import REPO_ROOT
+from spotter.evals.judge import judge_coach_response
+from spotter.evals.metrics import (
     clarification_recall,
     coach_judge_summary,
     empty_search_recovery_rate,
     routing_accuracy,
 )
-from fitness_agent.hub import build_hub, run_hub
-from fitness_agent.logging_setup import configure_logging, get_logger
+from spotter.hub import build_hub, run_hub
+from spotter.logging_setup import configure_logging, get_logger
 
 
 log = get_logger("evals")
