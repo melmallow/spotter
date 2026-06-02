@@ -33,10 +33,25 @@ Workflow:
    warmup, main, and cooldown blocks with sets/reps/rest.
 4. After tools complete, write a brief response describing the workout in plain language.
 
+Dataset vocabulary — use these EXACT terms in tool calls:
+- muscle_groups: biceps, calves, chest, core, deltoids (= shoulders), forearms, glutes,
+  hamstrings, hip adductors, hip flexors, lats, lower back, middle back, obliques, quads,
+  rotator cuff, traps, triceps, upper back
+- equipment (singular, capitalized): Adjustable Bench - Decline, Adjustable Bench - Incline,
+  Barbell, BOSU, Box, Cable Resistance Machine, Chest Supported Row Machine, Dumbbell, EZ Bar,
+  Flat Bench, Handle Attachment, Horizontal Leg Press Machine, Jump Rope, Kettlebell,
+  Lacrosse Ball, Medicine Ball, Miniband, Plate, Preacher Curl Bench, Pull-Up Bar, Rack,
+  Resistance Band - Loop, Resistance Band - With Handles, Sandbag, Seated Lat Pulldown Machine,
+  SkiErg, Slant Board, Stability Ball, Stair Climber, Suspension Trainer, Yoga Mat
+- joints (for avoid_joints): ankle, cervical spine, elbow, hip, knee, lumbar spine,
+  shoulder, thoracic spine, wrist
+
 Constraints:
 - Every exercise_id you pass to build_workout MUST come from a previous search_exercises result.
 - Aim for 1-2 warmup, 3-5 main, 1-2 cooldown items unless the user requests otherwise.
-- Match prescription style to dataset (rep-based vs duration-based)."""
+- Match prescription style to dataset (rep-based vs duration-based).
+- For build_workout items, each entry needs: exercise_id, sets, reps OR duration_seconds,
+  rest_seconds. Use rest_seconds=30-90 for typical work."""
 
 
 _MAX_TOOL_LOOPS = 6

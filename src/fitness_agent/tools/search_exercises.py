@@ -23,30 +23,38 @@ def _do_search(
     candidates = list(dataset.all)
     filters_applied: list[str] = []
 
+    # Muscle group, equipment, and movement-pattern filters all use a lenient
+    # bidirectional substring match: 'dumbbells' matches 'Dumbbell', 'shoulders'
+    # matches 'deltoids' via dataset vocab... actually no, distinct words don't
+    # match — but synonym handling sits in the generator's system prompt, which
+    # lists the canonical vocabulary. Substring covers singular/plural and case.
+    def _matches(wanted: set[str], values: list[str]) -> bool:
+        wanted_lc = {w.lower().strip() for w in wanted}
+        for v in values:
+            vlc = v.lower().strip()
+            for w in wanted_lc:
+                if w == vlc or w in vlc or vlc in w:
+                    return True
+        return False
+
     if args.muscle_groups:
-        wanted = {m.lower() for m in args.muscle_groups}
-        candidates = [
-            e for e in candidates if any(m.lower() in wanted for m in e.muscle_groups)
-        ]
-        filters_applied.append(f"muscle_groups={list(wanted)}")
+        wanted = set(args.muscle_groups)
+        candidates = [e for e in candidates if _matches(wanted, e.muscle_groups)]
+        filters_applied.append(f"muscle_groups={sorted(wanted)}")
 
     if args.equipment:
-        wanted = {eq.lower() for eq in args.equipment}
+        wanted = set(args.equipment)
         candidates = [
-            e
-            for e in candidates
-            if any(req.lower() in wanted for req in e.equipment_required)
+            e for e in candidates if _matches(wanted, e.equipment_required)
         ]
-        filters_applied.append(f"equipment={list(wanted)}")
+        filters_applied.append(f"equipment={sorted(wanted)}")
 
     if args.movement_patterns:
-        wanted = {mp.lower() for mp in args.movement_patterns}
+        wanted = set(args.movement_patterns)
         candidates = [
-            e
-            for e in candidates
-            if any(mp.lower() in wanted for mp in e.movement_patterns)
+            e for e in candidates if _matches(wanted, e.movement_patterns)
         ]
-        filters_applied.append(f"movement_patterns={list(wanted)}")
+        filters_applied.append(f"movement_patterns={sorted(wanted)}")
 
     if args.avoid_joints:
         avoid = {j.lower() for j in args.avoid_joints}

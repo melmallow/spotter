@@ -95,23 +95,35 @@ def _do_build(args: BuildWorkoutInput, dataset: Dataset) -> WorkoutPlan:
     return WorkoutPlan(blocks=blocks, notes=args.notes)
 
 
+def _coerce(item: Any) -> PrescribedExercise:
+    if isinstance(item, PrescribedExercise):
+        return item
+    if isinstance(item, dict):
+        return PrescribedExercise(**item)
+    raise TypeError(f"unexpected workout item type: {type(item).__name__}")
+
+
 @tool(args_schema=BuildWorkoutInput)
 def build_workout(
-    warmup: list[dict],
-    main: list[dict],
-    cooldown: list[dict],
+    warmup: list[Any],
+    main: list[Any],
+    cooldown: list[Any],
     notes: str | None = None,
 ) -> dict:
     """Assemble a structured workout (warmup / main / cooldown) from selected exercise IDs.
 
     Every `exercise_id` must reference a real exercise in the dataset — unknown
-    IDs raise `ValidationError`. Unilateral exercises (is_bilateral=True) are
+    IDs raise `ValueError`. Unilateral exercises (is_bilateral=True) are
     auto-paired with an `(other side)` second set of the same record.
+
+    With args_schema bound, LangChain validates inputs against BuildWorkoutInput
+    before calling — items may arrive as either dicts or PrescribedExercise
+    instances depending on the tool-binding path. _coerce() handles both.
     """
     args = BuildWorkoutInput(
-        warmup=[PrescribedExercise(**w) for w in warmup],
-        main=[PrescribedExercise(**m) for m in main],
-        cooldown=[PrescribedExercise(**c) for c in cooldown],
+        warmup=[_coerce(w) for w in warmup],
+        main=[_coerce(m) for m in main],
+        cooldown=[_coerce(c) for c in cooldown],
         notes=notes,
     )
     return _do_build(args, get_dataset()).model_dump()
