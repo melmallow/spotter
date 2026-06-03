@@ -44,6 +44,17 @@ def _resolved_log_entry(out: dict[str, Any]) -> dict[str, Any] | None:
     }
 
 
+def _resolved_workout(out: dict[str, Any]) -> dict[str, Any] | None:
+    """Surface the structured workout payload for WORKOUT_GENERATE responses."""
+    if out.get("route") != "WORKOUT_GENERATE":
+        return None
+    sub = out.get("sub_agent_output") or {}
+    workout = sub.get("workout")
+    if not isinstance(workout, dict) or not workout.get("blocks"):
+        return None
+    return workout
+
+
 def _route_selector(state: HubState) -> str:
     """Conditional edge function — pick the next node based on router output."""
     if state.get("clarification_needed"):
@@ -145,6 +156,7 @@ def run_hub(
             "trace_id": tid,
             "conversation_id": cid,
             "log_entry": _resolved_log_entry(out),
+            "workout": _resolved_workout(out),
         }
     except ValidationError as exc:
         latency_ms = int((time.perf_counter() - started) * 1000)
