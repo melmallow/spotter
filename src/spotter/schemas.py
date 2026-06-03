@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
-from typing import Any, Literal, TypedDict
+from typing import Annotated, Any, Literal, TypedDict
 
 from langchain_core.messages import BaseMessage
+from langgraph.graph.message import add_messages
 from pydantic import BaseModel, Field
 
 
@@ -12,18 +13,30 @@ Route = Literal["COACH", "WORKOUT_GENERATE", "WORKOUT_LOG", "UNKNOWN"]
 
 
 class HubState(TypedDict, total=False):
-    """Typed state flowing through the hub StateGraph and its subgraphs."""
+    """Typed state flowing through the hub StateGraph and its subgraphs.
 
-    user_input: str
+    Conversation-scoped fields persist across turns via the checkpointer.
+    Turn-scoped fields are overwritten on every clean turn — the router
+    always rewrites the routing fields, and every terminal node always
+    rewrites `sub_agent_output` and `final_response`.
+    """
+
+    # ---- Conversation-scoped (persist across turns via checkpointer) ----
+    messages: Annotated[list[BaseMessage], add_messages]
+
+    # ---- Turn-scoped (always overwritten) ----
+    user_input: str  # legacy mirror of latest HumanMessage; removed in Task 9.
     route: Route
     confidence: float
     route_reasoning: str
     clarification_needed: bool
     sub_agent_output: dict[str, Any]
     final_response: str
-    messages: list[BaseMessage]
     trace_id: str
     error: str
+
+    # ---- Per-turn ephemeral (generator's tool-call loop scratch) ----
+    generator_scratch: list[BaseMessage]
 
 
 # ---- Router structured output -------------------------------------------------
