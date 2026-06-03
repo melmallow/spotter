@@ -42,6 +42,7 @@ name, sets, reps, weight + unit if mentioned).
 ALSO populate `movement_keyword` with a single short keyword identifying the kind of
 movement — see the schema description for allowed values. Examples: 'I did rows'
 → 'row'; 'bench press' → 'press'; 'RDLs' → 'deadlift'; 'preacher curls' → 'curl'.
+Pick the dominant keyword; leave as None only if no clear one applies.
 
 If the input is not a workout log (e.g. a question), still attempt extraction —
 downstream will reject low-confidence matches."""
@@ -108,6 +109,11 @@ def _match(state: HubState, *, dataset: Dataset) -> dict[str, Any]:
     raw_name = entry_dict["exercise_name_raw"]
     keyword = (entry_dict.get("movement_keyword") or "").strip().lower()
 
+    # When the LLM gave us a movement keyword, prefer candidates whose name
+    # contains the keyword. This stops WRatio over-weighting an equipment token
+    # like 'Dumbbell' and steering 'dumbbell rows' to 'Alternating Dumbbell
+    # Decline Bench Press'. If the keyword pool is empty (the LLM picked a word
+    # the dataset doesn't use), fall back to the full dataset.
     if keyword:
         biased_pool = [e for e in dataset.all if keyword in e.name.lower()]
         pool = biased_pool if biased_pool else list(dataset.all)
@@ -115,6 +121,9 @@ def _match(state: HubState, *, dataset: Dataset) -> dict[str, Any]:
         pool = list(dataset.all)
 
     candidate_names = [e.name for e in pool]
+    # WRatio combines partial/token_set/token_sort strategies, which is what we
+    # want: "bench press" should match "Barbell Flat Bench Press" highly because
+    # the user's name is a partial substring of the canonical name.
     matches = process.extract(
         raw_name,
         candidate_names,
