@@ -626,6 +626,7 @@
     return notes || 'Generated workout';
   }
   function relTime(iso){
+    if (!iso) return '';
     const then = new Date(iso).getTime();
     if (isNaN(then)) return '';
     const sec = Math.max(1, Math.floor((Date.now() - then) / 1000));
