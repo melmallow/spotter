@@ -200,6 +200,10 @@
   }
   .workout-row .x:hover { background: rgba(226,75,74,0.12); color: #d8483f; }
   .workout-row .x svg { width: 14px; height: 14px; }
+  .workout-row.empty { cursor: default; border-style: dashed; }
+  .workout-row.empty:hover { border-color: var(--line); background: var(--surface); }
+  .workout-row.empty .row-title { color: var(--text-dim); font-weight: 600; }
+  .workout-row.empty .row-sub { color: var(--text-faint); }
 
   .modal-backdrop {
     position: fixed; inset: 0; background: rgba(0,0,0,0.45);
@@ -744,7 +748,7 @@
     return `<div class="wcard"><div class="wc-title">Your workout</div><div class="wc-meta">${sub}</div>${body}`
       + `<div class="wc-actions">`
       + `<button class="wc-btn discuss" disabled title="Coming in v2"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 2H4a2 2 0 0 0-2 2v18l4-4h14a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2z"/></svg>Discuss with coach</button>`
-      + `<button class="wc-btn log" data-ask="Log all the exercises from this workout">Log all</button>`
+      + `<button class="wc-btn log" data-log-all>Log all</button>`
       + `</div></div>`;
   }
 
@@ -768,6 +772,10 @@
     el.innerHTML = html;
     el.querySelectorAll('[data-ask]').forEach(b =>
       b.addEventListener('click', () => ask(b.getAttribute('data-ask'))));
+    if (workout) {
+      el.querySelectorAll('[data-log-all]').forEach(b =>
+        b.addEventListener('click', () => logAllFromWorkout(workout)));
+    }
     log.appendChild(el); scroll();
   }
   function addTyping(){
@@ -919,11 +927,37 @@
   }
 
   function fmtPrescription(e){
-    const base = `${e.sets} × ${e.reps}`;
+    let base;
+    if (e.reps) base = `${e.sets} × ${e.reps}`;
+    else if (e.duration_seconds) base = `${e.sets} × ${e.duration_seconds}s`;
+    else base = `${e.sets} sets`;
     if (e.weight == null) return base;
     const unit = e.weight_unit || 'lbs';
     const w = Number.isInteger(e.weight) ? e.weight : Number(e.weight).toString();
     return `${base} · ${w} ${unit}`;
+  }
+
+  function logAllFromWorkout(workout){
+    const blocks = Array.isArray(workout && workout.blocks) ? workout.blocks : [];
+    const entries = [];
+    blocks.forEach(b => (b.items || []).forEach(it => {
+      entries.push({
+        exercise_id: it.exercise_id || null,
+        exercise_name: it.exercise_name || 'Exercise',
+        sets: it.sets,
+        reps: it.reps || null,
+        duration_seconds: it.duration_seconds || null,
+        weight: null,
+        weight_unit: null,
+        side_note: it.side_note || null,
+      });
+    }));
+    if (!entries.length) {
+      addBot("This workout doesn't have any exercises to log.");
+      return;
+    }
+    entries.forEach(recordLog);
+    addBot(`Logged ${entries.length} exercise${entries.length === 1 ? '' : 's'} from your workout.`);
   }
   function fmtWhen(iso){
     const d = new Date(iso);
@@ -969,19 +1003,15 @@
   const WORKOUTS_PER_PAGE = 4;
   let workoutsPage = 0;
 
-  const STUB_WORKOUT_HTML = `<div class="plan">
-    <div class="thumb"><img class="photo" alt="" src="/static/press.jpg"
-      onerror="imgChain(this,'https://images.pexels.com/photos/4720236/pexels-photo-4720236.jpeg?auto=compress&cs=tinysrgb&w=600')" /></div>
-    <div class="body">
-      <div class="tag">Upper body · dumbbell</div>
-      <h3>30-min push focus</h3>
-      <div class="meta">4 exercises · warmup + main + cooldown · ~310 kcal</div>
-      <div class="row">
-        <button class="btn btn-primary" onclick="ask('Start my 30-minute upper body workout')"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M8 5v14l11-7z"/></svg> Start session</button>
-        <button class="btn btn-ghost" onclick="ask('Show me the full exercise list for today')">View exercises</button>
-      </div>
-    </div>
-  </div>`;
+  const STUB_WORKOUT_HTML = `<div class="workout-row empty">`
+    + `<div class="row-thumb" style="background: linear-gradient(135deg, #64748B, #334155)">`
+    +   `<img class="row-thumb-img" alt="" src="/static/workout.jpg" onerror="imgChain(this,'${CATEGORY_FALLBACK_URL}')" />`
+    + `</div>`
+    + `<div class="row-body">`
+    +   `<div class="row-title">No workouts yet</div>`
+    +   `<div class="row-sub">Generate one from the chat — it'll land here.</div>`
+    + `</div>`
+    + `</div>`;
 
   function loadWorkouts(){
     try { return JSON.parse(sessionStorage.getItem(WORKOUT_KEY) || '[]'); }
@@ -1079,7 +1109,7 @@
       + `<div class="m-divider"></div>`
       + `<div class="w-row">`
       + `<button class="w-start" disabled title="Coming in v2">${discussIcon}Discuss with coach</button>`
-      + `<button class="w-log" data-modal-ask="Log all the exercises from this workout">Log all</button>`
+      + `<button class="w-log" data-modal-log-all>Log all</button>`
       + `</div>`
       + `</div>`;
 
@@ -1093,6 +1123,11 @@
         const prompt = b.getAttribute('data-modal-ask');
         closeWorkoutModal();
         ask(prompt);
+      }));
+    backdrop.querySelectorAll('[data-modal-log-all]').forEach(b =>
+      b.addEventListener('click', () => {
+        closeWorkoutModal();
+        logAllFromWorkout(w);
       }));
     backdrop.querySelectorAll('[data-modal-swap]').forEach(b =>
       b.addEventListener('click', (e) => {
