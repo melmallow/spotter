@@ -739,13 +739,15 @@
   }
   function submitMsg(e){ e.preventDefault(); const v = input.value.trim(); if (v) send(v); return false; }
 
-  async function send(text){
-    addUser(text); input.value = ''; addTyping();
+  async function send(text, jointsOverride){
+    const joints = jointsOverride !== undefined ? jointsOverride : loadInjuries();
+    addUser(text); input.value = ''; renderInjuriesLine(joints); addTyping();
+    const payloadText = buildAvoidPrefix(joints) + text;
     try {
       const res = await fetch('/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: text, conversation_id: CONVERSATION_ID })
+        body: JSON.stringify({ message: payloadText, conversation_id: CONVERSATION_ID })
       });
       if (!res.ok) throw new Error('Request failed (' + res.status + ')');
       const d = await res.json();
@@ -1051,6 +1053,19 @@
       + `<button class="injury-add" type="button" onclick="openInjuryMenu()">+ add</button>`;
     host.querySelectorAll('[data-remove]').forEach(b =>
       b.addEventListener('click', () => toggleInjury(b.getAttribute('data-remove'))));
+  }
+
+  function buildAvoidPrefix(joints){
+    if (!joints || joints.length === 0) return '';
+    return `(avoid: ${joints.join(', ')}) `;
+  }
+  function renderInjuriesLine(joints){
+    if (!joints || joints.length === 0) return;
+    const labels = joints.map(displayLabel).join(', ');
+    const el = document.createElement('div');
+    el.className = 'sys-line';
+    el.innerHTML = `<span>Injuries to avoid: ${esc(labels)}</span>`;
+    log.appendChild(el); scroll();
   }
 
   renderLogs();
