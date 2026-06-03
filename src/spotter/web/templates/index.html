@@ -16,14 +16,14 @@
     --text: #15191A;
     --text-dim: #5B6568;
     --text-faint: #8C9498;
-    --teal: #12A98D;
-    --teal-deep: #0C8E78;
+    --teal: #5B63D3;
+    --teal-deep: #4A52C2;
     --teal-ink: #FFFFFF;
-    --teal-glow: rgba(18,169,141,0.16);
-    --teal-bright: #34E0BE;
+    --teal-glow: rgba(110,118,232,0.18);
+    --teal-bright: #8E94F2;
     --ink: #14181A;
-    --radius: 18px;
-    --radius-sm: 12px;
+    --radius: 20px;
+    --radius-sm: 14px;
     --font: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, Inter, system-ui, sans-serif;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -166,7 +166,7 @@
   .chat-head { padding: 22px 22px 16px; border-bottom: 1px solid rgba(255,255,255,0.08); }
   .chat-head .title { display: flex; align-items: center; gap: 10px; }
   .chat-head .pulse { width: 9px; height: 9px; border-radius: 50%; background: var(--teal-bright); box-shadow: 0 0 0 0 var(--teal-glow); animation: pulse 2.2s infinite; }
-  @keyframes pulse { 0%{box-shadow:0 0 0 0 rgba(52,224,190,.45)} 70%{box-shadow:0 0 0 10px rgba(52,224,190,0)} 100%{box-shadow:0 0 0 0 rgba(52,224,190,0)} }
+  @keyframes pulse { 0%{box-shadow:0 0 0 0 rgba(142,148,242,.45)} 70%{box-shadow:0 0 0 10px rgba(142,148,242,0)} 100%{box-shadow:0 0 0 0 rgba(142,148,242,0)} }
   .chat-head h3 { font-size: 16px; font-weight: 600; color: #fff; }
   .chat-head p { color: rgba(255,255,255,0.58); font-size: 13px; margin-top: 4px; }
 
@@ -177,13 +177,13 @@
   .bubble {
     border-radius: 16px; padding: 13px 16px; font-size: 14.5px; line-height: 1.55; word-wrap: break-word;
   }
-  .msg.user .bubble { background: linear-gradient(135deg, var(--teal), var(--teal-deep)); color: #042e28; font-weight: 600; border-bottom-right-radius: 5px; }
+  .msg.user .bubble { background: linear-gradient(135deg, var(--teal), var(--teal-deep)); color: #fff; font-weight: 500; border-bottom-right-radius: 5px; }
   .msg.bot .bubble { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.10); color: #EDEFF0; border-bottom-left-radius: 5px; }
   .msg.bot .bubble strong { color: var(--teal-bright); font-weight: 600; }
   .route {
     display: inline-flex; align-items: center; gap: 7px; margin-bottom: 8px;
     font-size: 11px; font-weight: 600; letter-spacing: .03em; text-transform: uppercase;
-    color: var(--teal-bright); background: rgba(52,224,190,0.14); padding: 5px 10px; border-radius: 8px;
+    color: var(--teal-bright); background: rgba(142,148,242,0.16); padding: 5px 10px; border-radius: 8px;
   }
   .route svg { width: 13px; height: 13px; }
   .route .conf { color: var(--text-faint); font-weight: 500; }
@@ -221,30 +221,26 @@
   .send:hover { filter: brightness(1.08); }
   .send svg { width: 19px; height: 19px; }
 
-  /* ---------- Mode workspace (Generate / Coach / Log) ---------- */
-  .switcher { display: flex; gap: 6px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 6px; margin: 4px 0 20px; box-shadow: 0 1px 2px rgba(15,25,26,0.04); }
-  .seg { flex: 1; border: 0; cursor: pointer; font-family: var(--font); font-weight: 600; font-size: 14px; color: var(--text-dim); background: transparent; border-radius: 10px; padding: 11px 0; display: inline-flex; align-items: center; justify-content: center; gap: 8px; transition: .15s; }
-  .seg svg { width: 17px; height: 17px; }
-  .seg:hover { color: var(--text); background: var(--surface-2); }
-  .seg.on { background: var(--ink); color: #fff; }
-  .seg.on svg { color: var(--teal-bright); }
-
-  .panel { display: none; }
-  .panel.on { display: block; animation: rise .3s cubic-bezier(.2,.8,.2,1) both; }
-
-  .builder { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px 18px 6px; box-shadow: 0 1px 2px rgba(15,25,26,0.04), 0 10px 28px rgba(15,25,26,0.07); margin-bottom: 16px; }
-  .selgroup { margin-bottom: 16px; }
-  .selgroup .glabel { font-size: 12px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 9px; }
-  .opts { display: flex; gap: 8px; flex-wrap: wrap; }
-  .opt { border: 1px solid var(--line-2); background: var(--surface); color: var(--text-dim); font-family: var(--font); font-size: 13px; font-weight: 500; cursor: pointer; padding: 8px 14px; border-radius: 999px; transition: .15s; }
-  .opt:hover { border-color: var(--teal-deep); color: var(--text); }
-  .opt.on { background: var(--ink); color: #fff; border-color: var(--ink); }
-
-  .entrybar { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px; box-shadow: 0 1px 2px rgba(15,25,26,0.04), 0 10px 28px rgba(15,25,26,0.07); margin-bottom: 18px; }
-  .entrybar .field { display: flex; gap: 8px; align-items: center; background: var(--surface-2); border: 1px solid var(--line-2); border-radius: 12px; padding: 6px 6px 6px 14px; transition: .15s; }
-  .entrybar .field:focus-within { border-color: var(--teal-deep); box-shadow: 0 0 0 4px var(--teal-glow); }
-  .entrybar input { flex: 1; background: transparent; border: 0; outline: 0; color: var(--text); font-family: var(--font); font-size: 14.5px; padding: 9px 0; }
-  .entrybar input::placeholder { color: var(--text-faint); }
+  /* ---------- In-chat workout card ---------- */
+  .wcard { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.10); border-radius: 14px; padding: 14px 15px; color: #EDEFF0; border-bottom-left-radius: 5px; }
+  .wc-title { font-size: 15px; font-weight: 600; color: #fff; letter-spacing: -0.01em; }
+  .wc-meta { color: rgba(255,255,255,0.55); font-size: 12.5px; margin-top: 2px; }
+  .wc-block { margin-top: 13px; }
+  .wc-bname { font-size: 11px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--teal-bright); margin-bottom: 4px; }
+  .wc-items .wc-ex { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-top: 1px solid rgba(255,255,255,0.08); }
+  .wc-items .wc-ex:first-child { border-top: 0; }
+  .wc-exname { font-size: 13.5px; font-weight: 500; color: #EDEFF0; }
+  .wc-exname .wc-side { color: rgba(255,255,255,0.5); font-weight: 400; }
+  .wc-presc { font-size: 12.5px; color: rgba(255,255,255,0.55); margin-top: 1px; }
+  .wc-swap { margin-left: auto; flex-shrink: 0; font-family: var(--font); font-size: 12px; color: rgba(255,255,255,0.6); border: 1px solid rgba(255,255,255,0.16); background: transparent; border-radius: 8px; padding: 4px 9px; cursor: pointer; transition: .15s; }
+  .wc-swap:hover { border-color: var(--teal-bright); color: var(--teal-bright); }
+  .wc-actions { display: flex; gap: 8px; margin-top: 14px; }
+  .wc-btn { border: 0; cursor: pointer; font-family: var(--font); font-weight: 600; font-size: 13px; border-radius: 10px; padding: 9px 14px; display: inline-flex; align-items: center; gap: 7px; transition: .15s; }
+  .wc-btn svg { width: 15px; height: 15px; }
+  .wc-btn.start { background: var(--teal-bright); color: #04261f; }
+  .wc-btn.start:hover { filter: brightness(1.06); }
+  .wc-btn.log { background: rgba(255,255,255,0.08); color: #fff; border: 1px solid rgba(255,255,255,0.16); }
+  .wc-btn.log:hover { background: rgba(255,255,255,0.14); }
 
   @media (max-width: 1180px) { .app { grid-template-columns: 84px 1fr 360px; } }
 </style>
@@ -291,107 +287,48 @@
       </div>
     </div>
 
-    <!-- Mode switcher: Generate / Coach / Log -->
-    <div class="switcher" role="tablist" aria-label="Workspace mode">
-      <button class="seg on" id="seg-generate" role="tab" aria-selected="true" onclick="setMode('generate')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 2.5 5.5L20 9l-4 4 1 6-5-3-5 3 1-6-4-4 5.5-.5z"/></svg> Generate</button>
-      <button class="seg" id="seg-coach" role="tab" aria-selected="false" onclick="setMode('coach')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-4.35-9.5-9A5 5 0 0 1 12 6a5 5 0 0 1 9.5 6c-2.5 4.65-9.5 9-9.5 9z"/></svg> Coach</button>
-      <button class="seg" id="seg-log" role="tab" aria-selected="false" onclick="setMode('log')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Log</button>
-    </div>
-
-    <!-- Generate -->
-    <section class="panel on" id="panel-generate" role="tabpanel" aria-label="Generate a workout">
-      <div class="builder">
-        <div class="selgroup"><div class="glabel">Duration</div><div class="opts" data-group="duration">
-          <button class="opt" onclick="pick(this)">20 min</button>
-          <button class="opt on" onclick="pick(this)">30 min</button>
-          <button class="opt" onclick="pick(this)">45 min</button>
-          <button class="opt" onclick="pick(this)">60 min</button>
-        </div></div>
-        <div class="selgroup"><div class="glabel">Equipment</div><div class="opts" data-group="equipment">
-          <button class="opt on" onclick="pick(this)">Dumbbell</button>
-          <button class="opt" onclick="pick(this)">Barbell</button>
-          <button class="opt" onclick="pick(this)">Kettlebell</button>
-          <button class="opt" onclick="pick(this)">Bodyweight</button>
-        </div></div>
-        <div class="selgroup"><div class="glabel">Focus</div><div class="opts" data-group="focus">
-          <button class="opt on" onclick="pick(this)">Upper body</button>
-          <button class="opt" onclick="pick(this)">Lower body</button>
-          <button class="opt" onclick="pick(this)">Push</button>
-          <button class="opt" onclick="pick(this)">Pull</button>
-          <button class="opt" onclick="pick(this)">Full body</button>
-        </div></div>
-        <div class="selgroup"><button class="btn btn-primary" onclick="buildWorkout()"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M8 5v14l11-7z"/></svg> Build workout</button></div>
-      </div>
-
-      <div class="section-h"><h2>Latest plan</h2><a onclick="ask('Build me a fresh workout for today')">Regenerate ↗</a></div>
-      <div class="plan">
-        <div class="thumb"><img class="photo" alt="" src="/static/press.jpg"
-          onerror="imgChain(this,'https://images.pexels.com/photos/4720236/pexels-photo-4720236.jpeg?auto=compress&cs=tinysrgb&w=600')" /></div>
-        <div class="body">
-          <div class="tag">Upper body · dumbbell</div>
-          <h3>30-min push focus</h3>
-          <div class="meta">4 exercises · warmup + main + cooldown · ~310 kcal</div>
-          <div class="row">
-            <button class="btn btn-primary" onclick="ask('Start my 30-minute upper body workout')"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M8 5v14l11-7z"/></svg> Start session</button>
-            <button class="btn btn-ghost" onclick="ask('Show me the full exercise list for today')">View exercises</button>
-          </div>
+    <div class="section-h"><h2>Today's plan</h2><a onclick="ask('Build me a fresh workout for today')">Regenerate ↗</a></div>
+    <div class="plan">
+      <div class="thumb"><img class="photo" alt="" src="/static/press.jpg"
+        onerror="imgChain(this,'https://images.pexels.com/photos/4720236/pexels-photo-4720236.jpeg?auto=compress&cs=tinysrgb&w=600')" /></div>
+      <div class="body">
+        <div class="tag">Upper body · dumbbell</div>
+        <h3>30-min push focus</h3>
+        <div class="meta">4 exercises · warmup + main + cooldown · ~310 kcal</div>
+        <div class="row">
+          <button class="btn btn-primary" onclick="ask('Start my 30-minute upper body workout')"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M8 5v14l11-7z"/></svg> Start session</button>
+          <button class="btn btn-ghost" onclick="ask('Show me the full exercise list for today')">View exercises</button>
         </div>
       </div>
-    </section>
+    </div>
 
-    <!-- Coach -->
-    <section class="panel" id="panel-coach" role="tabpanel" aria-label="Coach a movement">
-      <div class="entrybar">
-        <form class="field" onsubmit="return coachAsk(event)">
-          <input id="coach-input" autocomplete="off" placeholder="Look up a movement or ask a form question…" />
-          <button class="send" type="submit" aria-label="Ask coach"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M3.4 20.4 21 12 3.4 3.6 3 10l12 2-12 2z"/></svg></button>
-        </form>
-      </div>
-      <div class="section-h"><h2>Common movements</h2></div>
-      <div class="actions">
-        <button class="action" onclick="ask('What muscles does a Romanian deadlift work, and what are the key form cues?')">
-          <div class="pic"><img class="photo" alt="" src="/static/deadlift.jpg" onerror="imgChain(this,'https://images.pexels.com/photos/1552252/pexels-photo-1552252.jpeg?auto=compress&cs=tinysrgb&w=600')" /></div>
-          <div class="pad">
-            <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-4.35-9.5-9A5 5 0 0 1 12 6a5 5 0 0 1 9.5 6c-2.5 4.65-9.5 9-9.5 9z"/></svg></div>
-            <h4>Romanian deadlift</h4>
-            <p>Muscles worked, cues, and programming.</p>
-          </div>
-        </button>
-        <button class="action" onclick="ask('How do I improve my bench press form and avoid shoulder strain?')">
-          <div class="pic"><img class="photo" alt="" src="/static/torso.jpg" onerror="imgChain(this,'https://images.pexels.com/photos/1431282/pexels-photo-1431282.jpeg?auto=compress&cs=tinysrgb&w=600')" /></div>
-          <div class="pad">
-            <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-4.35-9.5-9A5 5 0 0 1 12 6a5 5 0 0 1 9.5 6c-2.5 4.65-9.5 9-9.5 9z"/></svg></div>
-            <h4>Bench press</h4>
-            <p>Setup, bar path, and common mistakes.</p>
-          </div>
-        </button>
-        <button class="action" onclick="ask('What are good cues for a back squat and how deep should I go?')">
-          <div class="pic"><img class="photo" alt="" src="/static/kettlebell.jpg" onerror="imgChain(this,'https://images.pexels.com/photos/4162449/pexels-photo-4162449.jpeg?auto=compress&cs=tinysrgb&w=600')" /></div>
-          <div class="pad">
-            <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-4.35-9.5-9A5 5 0 0 1 12 6a5 5 0 0 1 9.5 6c-2.5 4.65-9.5 9-9.5 9z"/></svg></div>
-            <h4>Back squat</h4>
-            <p>Depth, bracing, and knee tracking.</p>
-          </div>
-        </button>
-      </div>
-    </section>
-
-    <!-- Log -->
-    <section class="panel" id="panel-log" role="tabpanel" aria-label="Log a set">
-      <div class="entrybar">
-        <form class="field" onsubmit="return logSet(event)">
-          <input id="log-input" autocomplete="off" placeholder="e.g. 3x10 bench press @ 185 lbs" />
-          <button class="send" type="submit" aria-label="Log set"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></button>
-        </form>
-      </div>
-      <div class="section-h"><h2>Quick log</h2></div>
-      <div class="opts" style="margin: 0 2px;">
-        <button class="opt" onclick="ask('I just did 3x10 bench press at 185 lbs')">3×10 bench @ 185</button>
-        <button class="opt" onclick="ask('I just did 4x8 single-arm dumbbell row at 60 lbs')">4×8 DB row @ 60</button>
-        <button class="opt" onclick="ask('I just did 3x12 Romanian deadlift at 135 lbs')">3×12 RDL @ 135</button>
-        <button class="opt" onclick="ask('I just did 3x15 dumbbell shoulder press at 30 lbs')">3×15 OHP @ 30</button>
-      </div>
-    </section>
+    <div class="section-h"><h2>Quick actions</h2></div>
+    <div class="actions">
+      <button class="action" onclick="ask('What muscles does a Romanian deadlift work?')">
+        <div class="pic"><img class="photo" alt="" src="/static/deadlift.jpg" onerror="imgChain(this,'https://images.pexels.com/photos/1552252/pexels-photo-1552252.jpeg?auto=compress&cs=tinysrgb&w=600')" /></div>
+        <div class="pad">
+          <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-4.35-9.5-9A5 5 0 0 1 12 6a5 5 0 0 1 9.5 6c-2.5 4.65-9.5 9-9.5 9z"/></svg></div>
+          <h4>Coach a movement</h4>
+          <p>Form cues, muscles worked, and programming tips.</p>
+        </div>
+      </button>
+      <button class="action" onclick="ask('Build me a 30-minute upper body workout with dumbbells')">
+        <div class="pic"><img class="photo" alt="" src="/static/kettlebell.jpg" onerror="imgChain(this,'https://images.pexels.com/photos/4162449/pexels-photo-4162449.jpeg?auto=compress&cs=tinysrgb&w=600')" /></div>
+        <div class="pad">
+          <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 2.5 5.5L20 9l-4 4 1 6-5-3-5 3 1-6-4-4 5.5-.5z"/></svg></div>
+          <h4>Generate a workout</h4>
+          <p>Tailored to your gear, time, and target muscles.</p>
+        </div>
+      </button>
+      <button class="action" onclick="ask('I just did 3x10 bench press at 185 lbs')">
+        <div class="pic"><img class="photo" alt="" src="/static/torso.jpg" onerror="imgChain(this,'https://images.pexels.com/photos/1431282/pexels-photo-1431282.jpeg?auto=compress&cs=tinysrgb&w=600')" /></div>
+        <div class="pad">
+          <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>
+          <h4>Log a set</h4>
+          <p>Just say what you did — Spotter matches and records it.</p>
+        </div>
+      </button>
+    </div>
 
     <div class="section-h"><h2>Recent logs</h2><a id="logs-toggle" onclick="toggleLogs()" style="display:none">View all ↗</a></div>
     <div class="logs" id="logs">
@@ -421,6 +358,8 @@
 </div>
 
 <script>
+  const CONVERSATION_ID = crypto.randomUUID();
+
   const log = document.getElementById('log');
   const input = document.getElementById('input');
 
@@ -440,7 +379,41 @@
   };
 
   function esc(s){ return (s||'').replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
+  function escAttr(s){ return (s||'').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
   function fmt(s){ return esc(s).replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>'); }
+
+  function prescOf(it){
+    const base = it.reps ? `${it.sets} × ${it.reps}`
+      : it.duration_seconds ? `${it.sets} × ${it.duration_seconds}s`
+      : `${it.sets} sets`;
+    return base + (it.rest_seconds != null ? ` · rest ${it.rest_seconds}s` : '');
+  }
+  function renderWorkoutCard(w){
+    const blocks = Array.isArray(w.blocks) ? w.blocks : [];
+    let count = 0; blocks.forEach(b => count += (b.items || []).length);
+    const names = blocks.map(b => b.name).filter(Boolean).join(' · ');
+    const sub = w.notes ? esc(w.notes) : `${count} exercise${count===1?'':'s'} · ${esc(names)}`;
+    let body = '';
+    blocks.forEach(b => {
+      const items = b.items || [];
+      if (!items.length) return;
+      body += `<div class="wc-block"><div class="wc-bname">${esc(b.name||'block')}</div><div class="wc-items">`;
+      items.forEach(it => {
+        const nm = esc(it.exercise_name || 'Exercise')
+          + (it.side_note ? ` <span class="wc-side">(${esc(it.side_note)})</span>` : '');
+        const swap = escAttr(`Swap ${it.exercise_name || 'this exercise'} for a different exercise`);
+        body += `<div class="wc-ex"><div><div class="wc-exname">${nm}</div>`
+          + `<div class="wc-presc">${esc(prescOf(it))}</div></div>`
+          + `<button class="wc-swap" data-ask="${swap}">swap</button></div>`;
+      });
+      body += `</div></div>`;
+    });
+    return `<div class="wcard"><div class="wc-title">Your workout</div><div class="wc-meta">${sub}</div>${body}`
+      + `<div class="wc-actions">`
+      + `<button class="wc-btn start" data-ask="Start this workout"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>Start</button>`
+      + `<button class="wc-btn log" data-ask="Log all the exercises from this workout">Log all</button>`
+      + `</div></div>`;
+  }
 
   function addUser(text){
     const el = document.createElement('div');
@@ -448,16 +421,20 @@
     el.innerHTML = `<div class="bubble">${esc(text)}</div>`;
     log.appendChild(el); scroll();
   }
-  function addBot(text, route, conf){
+  function addBot(text, route, conf, workout){
     const el = document.createElement('div');
     el.className = 'msg bot';
-    let head = '';
+    let html = '';
     if (route && ROUTES[route]) {
       const r = ROUTES[route];
       const c = conf != null ? `<span class="conf">${Math.round(conf*100)}%</span>` : '';
-      head = `<div class="route"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="${r.icon}"/></svg>${r.label} ${c}</div>`;
+      html += `<div class="route"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="${r.icon}"/></svg>${r.label} ${c}</div>`;
     }
-    el.innerHTML = head + `<div class="bubble">${fmt(text)}</div>`;
+    if (text && text.trim()) html += `<div class="bubble">${fmt(text)}</div>`;
+    if (workout) html += renderWorkoutCard(workout);
+    el.innerHTML = html;
+    el.querySelectorAll('[data-ask]').forEach(b =>
+      b.addEventListener('click', () => ask(b.getAttribute('data-ask'))));
     log.appendChild(el); scroll();
   }
   function addTyping(){
@@ -478,12 +455,12 @@
       const res = await fetch('/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: text })
+        body: JSON.stringify({ message: text, conversation_id: CONVERSATION_ID })
       });
       if (!res.ok) throw new Error('Request failed (' + res.status + ')');
       const d = await res.json();
       rmTyping();
-      addBot(d.response, d.route, d.confidence);
+      addBot(d.response, d.route, d.confidence, d.workout);
       if (d.log_entry) recordLog(d.log_entry);
     } catch (err) {
       rmTyping();
@@ -546,51 +523,6 @@
     }
   }
   function toggleLogs(){ logsExpanded = !logsExpanded; renderLogs(); }
-
-  // --- Mode workspace (Generate / Coach / Log) --------------------------------
-  const MODES = ['generate', 'coach', 'log'];
-  const PLACEHOLDERS = {
-    generate: 'Refine your plan, e.g. swap an exercise…',
-    coach: 'Ask about a movement…',
-    log: 'Tell me a set you just finished…',
-  };
-  function setMode(m){
-    MODES.forEach(x => {
-      const seg = document.getElementById('seg-' + x);
-      const panel = document.getElementById('panel-' + x);
-      const active = x === m;
-      seg.classList.toggle('on', active);
-      seg.setAttribute('aria-selected', active ? 'true' : 'false');
-      panel.classList.toggle('on', active);
-    });
-    input.placeholder = PLACEHOLDERS[m] || 'Ask, generate, or log…';
-  }
-  function pick(btn){
-    btn.parentElement.querySelectorAll('.opt').forEach(o => o.classList.remove('on'));
-    btn.classList.add('on');
-  }
-  function selVal(group){
-    const el = document.querySelector(`.opts[data-group="${group}"] .opt.on`);
-    return el ? el.textContent.trim() : '';
-  }
-  function buildWorkout(){
-    const d = selVal('duration'), e = selVal('equipment'), f = selVal('focus');
-    ask(`Build me a ${d} ${f.toLowerCase()} workout with ${e.toLowerCase()}`);
-  }
-  function coachAsk(ev){
-    ev.preventDefault();
-    const f = document.getElementById('coach-input');
-    const v = f.value.trim();
-    if (v) { ask(v); f.value = ''; }
-    return false;
-  }
-  function logSet(ev){
-    ev.preventDefault();
-    const f = document.getElementById('log-input');
-    const v = f.value.trim();
-    if (v) { ask('I just did ' + v); f.value = ''; }
-    return false;
-  }
 
   renderLogs();
   addBot("Hey — I'm Spotter. Ask what muscles a deadlift works, have me build a 30-minute upper-body session, or just tell me a set you finished and I'll log it.");

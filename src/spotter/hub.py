@@ -6,6 +6,7 @@ import time
 import uuid
 from typing import Any
 
+from langchain_core.messages import HumanMessage
 from langgraph.graph import END, START, StateGraph
 from pydantic import ValidationError
 
@@ -59,12 +60,19 @@ def _route_selector(state: HubState) -> str:
 
 def build_hub(
     *,
+    checkpointer: Any = None,
     router_model: Any = None,
     coach_model: Any = None,
     generator_model: Any = None,
     logger_model: Any = None,
 ):
-    """Compile the full hub graph. All models are optional injection points for tests."""
+    """Compile the full hub graph.
+
+    `checkpointer` enables multi-turn conversation memory via LangGraph
+    thread_id. Pass an explicit `MemorySaver()` to enable; pass `None`
+    (the default) for stateless single-turn invocation (used by some tests).
+    All models are optional injection points for tests.
+    """
     router = build_router_subgraph(model=router_model)
     coach = build_coach_subgraph(model=coach_model)
     generator = build_generator_subgraph(model=generator_model)
@@ -91,17 +99,36 @@ def build_hub(
     for terminal in ("clarification", "coach", "generator", "logger"):
         graph.add_edge(terminal, END)
 
-    return graph.compile()
+    return graph.compile(checkpointer=checkpointer)
 
 
-def run_hub(hub, user_input: str, trace_id: str | None = None) -> dict[str, Any]:
-    """Invoke the hub with a fresh trace_id binding + a top-level ValidationError catch."""
+def run_hub(
+    hub,
+    user_input: str,
+    conversation_id: str | None = None,
+    trace_id: str | None = None,
+) -> dict[str, Any]:
+    """Invoke the hub with a fresh trace_id binding + a top-level ValidationError catch.
+
+    `conversation_id` is passed as LangGraph's `thread_id` so the checkpointer
+    can rehydrate prior conversation state. If omitted, a one-shot UUID is used
+    (no cross-turn continuity).
+    """
     tid = trace_id or f"req-{uuid.uuid4().hex[:12]}"
-    bind_contextvars(trace_id=tid)
+    cid = conversation_id or f"oneshot-{uuid.uuid4().hex[:12]}"
+    bind_contextvars(trace_id=tid, conversation_id=cid)
     started = time.perf_counter()
     log.info("hub_request", user_input=user_input)
+    config = {"configurable": {"thread_id": cid}}
     try:
-        out = hub.invoke({"user_input": user_input, "trace_id": tid})
+        out = hub.invoke(
+            {
+                "messages": [HumanMessage(content=user_input)],
+                "user_input": user_input,  # legacy mirror; removed in Task 9.
+                "trace_id": tid,
+            },
+            config=config,
+        )
         latency_ms = int((time.perf_counter() - started) * 1000)
         log.info(
             "hub_response",
@@ -117,6 +144,7 @@ def run_hub(hub, user_input: str, trace_id: str | None = None) -> dict[str, Any]
             "route": out.get("route"),
             "confidence": out.get("confidence"),
             "trace_id": tid,
+            "conversation_id": cid,
             "log_entry": _resolved_log_entry(out),
         }
     except ValidationError as exc:
@@ -135,6 +163,7 @@ def run_hub(hub, user_input: str, trace_id: str | None = None) -> dict[str, Any]
             "route": None,
             "confidence": None,
             "trace_id": tid,
+            "conversation_id": cid,
             "error": "validation_error",
         }
     except Exception as exc:
@@ -152,6 +181,7 @@ def run_hub(hub, user_input: str, trace_id: str | None = None) -> dict[str, Any]
             "route": None,
             "confidence": None,
             "trace_id": tid,
+            "conversation_id": cid,
             "error": type(exc).__name__,
         }
     finally:

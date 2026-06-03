@@ -11,6 +11,8 @@ from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
+from langgraph.checkpoint.memory import MemorySaver
+
 from spotter.hub import build_hub, run_hub
 from spotter.logging_setup import (
     bind_contextvars,
@@ -31,12 +33,15 @@ class ChatRequest(BaseModel):
     """Schema for POST /chat — keeps malformed bodies out of the hub."""
 
     message: str = Field(min_length=1, max_length=2000)
+    conversation_id: str = Field(
+        min_length=1, max_length=64, pattern=r"^[A-Za-z0-9_-]+$"
+    )
 
 
 def create_app() -> FastAPI:
     """Build the FastAPI app with a long-lived hub instance."""
     app = FastAPI(title="Spotter", version="0.1.0")
-    hub = build_hub()
+    hub = build_hub(checkpointer=MemorySaver())
 
     _STATIC_DIR.mkdir(exist_ok=True)
     app.mount("/static", StaticFiles(directory=str(_STATIC_DIR)), name="static")
@@ -63,15 +68,13 @@ def create_app() -> FastAPI:
 
     @app.post("/chat")
     async def chat(req: ChatRequest) -> JSONResponse:
-        result = run_hub(hub, req.message)
-        # Convert any workout payload sitting inside sub_agent_output into the
-        # human-facing response text — keeps the response string self-contained.
-        rendered = _render_response(result["response"], result.get("workout"))
+        result = run_hub(hub, req.message, conversation_id=req.conversation_id)
         payload = {
-            "response": rendered,
+            "response": result["response"],
             "route": result.get("route"),
             "confidence": result.get("confidence"),
             "trace_id": result.get("trace_id"),
+            "conversation_id": result.get("conversation_id"),
             "log_entry": result.get("log_entry"),
         }
         return JSONResponse(payload)
