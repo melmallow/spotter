@@ -7,7 +7,7 @@ Dashboard cards:
   torso.jpg      - "Log a set" card
 
 My Workouts list thumbnails (one per workout category):
-  arms.jpg       - workouts mentioning biceps/triceps/curls
+  biceps.jpg     - workouts mentioning arms / biceps / triceps / curls
   chest.jpg      - chest / bench press / push-ups
   back.jpg       - back / rows / pulldowns / pull-ups
   shoulders.jpg  - shoulders / deltoids / overhead press
