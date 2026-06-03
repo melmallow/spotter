@@ -156,7 +156,7 @@
   .workout .w-title { font-size: 16px; font-weight: 700; letter-spacing: -0.01em; padding-right: 32px; }
   .workout .w-sub { color: var(--text-dim); font-size: 13px; margin-top: 2px; }
   .w-blocks { display: flex; flex-direction: column; gap: 22px; }
-  .w-bname { font-size: 11px; font-weight: 700; color: var(--text-faint); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 10px; padding-bottom: 6px; border-bottom: 1px solid var(--line); }
+  .w-bname { font-size: 11px; font-weight: 700; color: var(--teal-deep); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 10px; padding-bottom: 6px; border-bottom: 1px solid var(--teal-glow); }
   .w-ex { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 8px 0; font-size: 13.5px; }
   .w-ex + .w-ex { border-top: 1px solid var(--line); }
   .w-ex .w-name { color: var(--text); line-height: 1.35; }
@@ -177,12 +177,12 @@
 
   .workout-row {
     background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-sm);
-    padding: 14px 16px; position: relative; cursor: pointer; transition: .15s;
-    display: grid; grid-template-columns: 56px 1fr auto; gap: 14px; align-items: center;
+    padding: 16px 18px; position: relative; cursor: pointer; transition: .15s;
+    display: grid; grid-template-columns: 112px 1fr auto; gap: 18px; align-items: center;
   }
   .workout-row:hover { border-color: var(--text-faint); background: var(--surface-2); }
   .workout-row .row-thumb {
-    width: 56px; height: 56px; border-radius: 14px;
+    width: 112px; height: 112px; border-radius: 16px;
     overflow: hidden; position: relative;
     box-shadow: 0 4px 10px rgba(15,25,26,0.08);
     user-select: none;
@@ -236,8 +236,8 @@
   }
   .modal-card .w-row .w-start { background: var(--surface-2); color: var(--text-faint); border: 1px solid var(--line); flex: 1; justify-content: center; cursor: not-allowed; }
   .modal-card .w-row .w-start svg { width: 14px; height: 14px; opacity: 0.7; }
-  .modal-card .w-row .w-log { background: var(--surface-2); color: var(--text); border: 1px solid var(--line-2); }
-  .modal-card .w-row .w-log:hover { background: var(--surface-3); }
+  .modal-card .w-row .w-log { background: linear-gradient(135deg, var(--teal), var(--teal-deep)); color: #fff; border: 0; box-shadow: 0 6px 16px var(--teal-glow); }
+  .modal-card .w-row .w-log:hover { filter: brightness(1.05); transform: translateY(-1px); box-shadow: 0 10px 22px var(--teal-glow); }
 
   .actions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; max-width: 720px; }
   .action {
