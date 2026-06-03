@@ -25,6 +25,24 @@ from spotter.schemas import HubState
 log = get_logger("hub")
 
 
+def _resolved_log_entry(out: dict[str, Any]) -> dict[str, Any] | None:
+    """Surface just the fields the client needs to render a Recent Logs row."""
+    if out.get("route") != "WORKOUT_LOG":
+        return None
+    sub = out.get("sub_agent_output") or {}
+    if not sub.get("resolved") or "log_entry" not in sub:
+        return None
+    entry = sub["log_entry"]
+    return {
+        "exercise_id": sub.get("exercise_id"),
+        "exercise_name": sub.get("canonical_name"),
+        "sets": entry.get("sets"),
+        "reps": entry.get("reps"),
+        "weight": entry.get("weight"),
+        "weight_unit": entry.get("weight_unit"),
+    }
+
+
 def _route_selector(state: HubState) -> str:
     """Conditional edge function — pick the next node based on router output."""
     if state.get("clarification_needed"):
@@ -99,6 +117,7 @@ def run_hub(hub, user_input: str, trace_id: str | None = None) -> dict[str, Any]
             "route": out.get("route"),
             "confidence": out.get("confidence"),
             "trace_id": tid,
+            "log_entry": _resolved_log_entry(out),
         }
     except ValidationError as exc:
         latency_ms = int((time.perf_counter() - started) * 1000)

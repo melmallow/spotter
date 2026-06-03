@@ -8,6 +8,7 @@ from pathlib import Path
 
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from spotter.hub import build_hub, run_hub
@@ -23,6 +24,7 @@ configure_logging()
 log = get_logger("web")
 
 _INDEX_HTML_PATH = Path(__file__).parent / "templates" / "index.html"
+_STATIC_DIR = Path(__file__).parent / "static"
 
 
 class ChatRequest(BaseModel):
@@ -36,6 +38,9 @@ def create_app() -> FastAPI:
     app = FastAPI(title="Spotter", version="0.1.0")
     hub = build_hub()
 
+    _STATIC_DIR.mkdir(exist_ok=True)
+    app.mount("/static", StaticFiles(directory=str(_STATIC_DIR)), name="static")
+
     @app.middleware("http")
     async def attach_trace_id(request: Request, call_next):
         trace_id = f"req-{uuid.uuid4().hex[:12]}"
@@ -47,11 +52,10 @@ def create_app() -> FastAPI:
         finally:
             clear_contextvars()
 
-    _index_html = _INDEX_HTML_PATH.read_text(encoding="utf-8")
-
     @app.get("/", response_class=HTMLResponse)
     async def index(request: Request) -> HTMLResponse:
-        return HTMLResponse(content=_index_html)
+        # Read fresh each request so template edits show on refresh without a restart.
+        return HTMLResponse(content=_INDEX_HTML_PATH.read_text(encoding="utf-8"))
 
     @app.get("/health")
     async def health() -> dict[str, str]:
@@ -68,6 +72,7 @@ def create_app() -> FastAPI:
             "route": result.get("route"),
             "confidence": result.get("confidence"),
             "trace_id": result.get("trace_id"),
+            "log_entry": result.get("log_entry"),
         }
         return JSONResponse(payload)
 

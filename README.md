@@ -5,7 +5,7 @@ A LangGraph hub agent that routes user requests across three intents — coach a
 ## Quick start
 
 ```bash
-git clone https://github.com/melmallow/Spotter.git && cd Spotter
+git clone https://github.com/melmallow/spotter.git && cd spotter
 cp .env.example .env             # then put your ANTHROPIC_API_KEY in .env
 uv sync --extra dev
 uv run python -m spotter   # serves http://127.0.0.1:8000
