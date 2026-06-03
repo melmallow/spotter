@@ -124,7 +124,6 @@ def run_hub(
         out = hub.invoke(
             {
                 "messages": [HumanMessage(content=user_input)],
-                "user_input": user_input,  # legacy mirror; removed in Task 9.
                 "trace_id": tid,
             },
             config=config,

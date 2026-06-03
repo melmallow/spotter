@@ -25,7 +25,6 @@ class HubState(TypedDict, total=False):
     messages: Annotated[list[BaseMessage], add_messages]
 
     # ---- Turn-scoped (always overwritten) ----
-    user_input: str  # legacy mirror of latest HumanMessage; removed in Task 9.
     route: Route
     confidence: float
     route_reasoning: str
