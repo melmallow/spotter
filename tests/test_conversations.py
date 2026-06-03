@@ -52,3 +52,8 @@ def test_trim_single_human_message():
     msgs = [HumanMessage(content="hello")]
     trimmed = trim_history(msgs, max_turns=8)
     assert trimmed == msgs
+
+
+def test_trim_max_turns_zero_returns_empty():
+    msgs = _alternating(4)
+    assert trim_history(msgs, max_turns=0) == []

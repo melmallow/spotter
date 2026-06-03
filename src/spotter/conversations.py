@@ -21,7 +21,7 @@ def trim_history(messages: list[BaseMessage], max_turns: int) -> list[BaseMessag
     Empty input returns empty output. Lists shorter than the window are returned
     unchanged.
     """
-    if not messages:
+    if not messages or max_turns <= 0:
         return []
     keep = 2 * max_turns
     trimmed = messages[-keep:] if len(messages) > keep else list(messages)
