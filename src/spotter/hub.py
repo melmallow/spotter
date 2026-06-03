@@ -6,6 +6,7 @@ import time
 import uuid
 from typing import Any
 
+from langchain_core.messages import HumanMessage
 from langgraph.graph import END, START, StateGraph
 from pydantic import ValidationError
 
@@ -25,6 +26,24 @@ from spotter.schemas import HubState
 log = get_logger("hub")
 
 
+def _resolved_log_entry(out: dict[str, Any]) -> dict[str, Any] | None:
+    """Surface just the fields the client needs to render a Recent Logs row."""
+    if out.get("route") != "WORKOUT_LOG":
+        return None
+    sub = out.get("sub_agent_output") or {}
+    if not sub.get("resolved") or "log_entry" not in sub:
+        return None
+    entry = sub["log_entry"]
+    return {
+        "exercise_id": sub.get("exercise_id"),
+        "exercise_name": sub.get("canonical_name"),
+        "sets": entry.get("sets"),
+        "reps": entry.get("reps"),
+        "weight": entry.get("weight"),
+        "weight_unit": entry.get("weight_unit"),
+    }
+
+
 def _route_selector(state: HubState) -> str:
     """Conditional edge function — pick the next node based on router output."""
     if state.get("clarification_needed"):
@@ -41,12 +60,19 @@ def _route_selector(state: HubState) -> str:
 
 def build_hub(
     *,
+    checkpointer: Any = None,
     router_model: Any = None,
     coach_model: Any = None,
     generator_model: Any = None,
     logger_model: Any = None,
 ):
-    """Compile the full hub graph. All models are optional injection points for tests."""
+    """Compile the full hub graph.
+
+    `checkpointer` enables multi-turn conversation memory via LangGraph
+    thread_id. Pass an explicit `MemorySaver()` to enable; pass `None`
+    (the default) for stateless single-turn invocation (used by some tests).
+    All models are optional injection points for tests.
+    """
     router = build_router_subgraph(model=router_model)
     coach = build_coach_subgraph(model=coach_model)
     generator = build_generator_subgraph(model=generator_model)
@@ -73,17 +99,35 @@ def build_hub(
     for terminal in ("clarification", "coach", "generator", "logger"):
         graph.add_edge(terminal, END)
 
-    return graph.compile()
+    return graph.compile(checkpointer=checkpointer)
 
 
-def run_hub(hub, user_input: str, trace_id: str | None = None) -> dict[str, Any]:
-    """Invoke the hub with a fresh trace_id binding + a top-level ValidationError catch."""
+def run_hub(
+    hub,
+    user_input: str,
+    conversation_id: str | None = None,
+    trace_id: str | None = None,
+) -> dict[str, Any]:
+    """Invoke the hub with a fresh trace_id binding + a top-level ValidationError catch.
+
+    `conversation_id` is passed as LangGraph's `thread_id` so the checkpointer
+    can rehydrate prior conversation state. If omitted, a one-shot UUID is used
+    (no cross-turn continuity).
+    """
     tid = trace_id or f"req-{uuid.uuid4().hex[:12]}"
-    bind_contextvars(trace_id=tid)
+    cid = conversation_id or f"oneshot-{uuid.uuid4().hex[:12]}"
+    bind_contextvars(trace_id=tid, conversation_id=cid)
     started = time.perf_counter()
     log.info("hub_request", user_input=user_input)
+    config = {"configurable": {"thread_id": cid}}
     try:
-        out = hub.invoke({"user_input": user_input, "trace_id": tid})
+        out = hub.invoke(
+            {
+                "messages": [HumanMessage(content=user_input)],
+                "trace_id": tid,
+            },
+            config=config,
+        )
         latency_ms = int((time.perf_counter() - started) * 1000)
         log.info(
             "hub_response",
@@ -99,6 +143,8 @@ def run_hub(hub, user_input: str, trace_id: str | None = None) -> dict[str, Any]
             "route": out.get("route"),
             "confidence": out.get("confidence"),
             "trace_id": tid,
+            "conversation_id": cid,
+            "log_entry": _resolved_log_entry(out),
         }
     except ValidationError as exc:
         latency_ms = int((time.perf_counter() - started) * 1000)
@@ -116,6 +162,7 @@ def run_hub(hub, user_input: str, trace_id: str | None = None) -> dict[str, Any]
             "route": None,
             "confidence": None,
             "trace_id": tid,
+            "conversation_id": cid,
             "error": "validation_error",
         }
     except Exception as exc:
@@ -133,6 +180,7 @@ def run_hub(hub, user_input: str, trace_id: str | None = None) -> dict[str, Any]
             "route": None,
             "confidence": None,
             "trace_id": tid,
+            "conversation_id": cid,
             "error": type(exc).__name__,
         }
     finally:

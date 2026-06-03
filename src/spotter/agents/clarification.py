@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from typing import Any
 
+from langchain_core.messages import AIMessage
+
 from spotter.logging_setup import get_logger
 from spotter.schemas import HubState
 
@@ -45,4 +47,8 @@ def clarification_node(state: HubState) -> dict[str, Any]:
         f"{options_text}? A bit more detail will help me route correctly."
     )
     log.info("clarification_emitted", offered=top_two)
-    return {"final_response": message, "sub_agent_output": {"clarification": True}}
+    return {
+        "final_response": message,
+        "sub_agent_output": {"clarification": True},
+        "messages": [AIMessage(content=message)],
+    }

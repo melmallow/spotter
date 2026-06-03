@@ -2,12 +2,13 @@
 
 from __future__ import annotations
 
-import json
 import uuid
 from pathlib import Path
 
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
+from langgraph.checkpoint.memory import MemorySaver
 from pydantic import BaseModel, Field
 
 from spotter.hub import build_hub, run_hub
@@ -23,18 +24,25 @@ configure_logging()
 log = get_logger("web")
 
 _INDEX_HTML_PATH = Path(__file__).parent / "templates" / "index.html"
+_STATIC_DIR = Path(__file__).parent / "static"
 
 
 class ChatRequest(BaseModel):
     """Schema for POST /chat — keeps malformed bodies out of the hub."""
 
     message: str = Field(min_length=1, max_length=2000)
+    conversation_id: str = Field(
+        min_length=1, max_length=64, pattern=r"^[A-Za-z0-9_-]+$"
+    )
 
 
 def create_app() -> FastAPI:
     """Build the FastAPI app with a long-lived hub instance."""
     app = FastAPI(title="Spotter", version="0.1.0")
-    hub = build_hub()
+    hub = build_hub(checkpointer=MemorySaver())
+
+    _STATIC_DIR.mkdir(exist_ok=True)
+    app.mount("/static", StaticFiles(directory=str(_STATIC_DIR)), name="static")
 
     @app.middleware("http")
     async def attach_trace_id(request: Request, call_next):
@@ -47,11 +55,10 @@ def create_app() -> FastAPI:
         finally:
             clear_contextvars()
 
-    _index_html = _INDEX_HTML_PATH.read_text(encoding="utf-8")
-
     @app.get("/", response_class=HTMLResponse)
     async def index(request: Request) -> HTMLResponse:
-        return HTMLResponse(content=_index_html)
+        # Read fresh each request so template edits show on refresh without a restart.
+        return HTMLResponse(content=_INDEX_HTML_PATH.read_text(encoding="utf-8"))
 
     @app.get("/health")
     async def health() -> dict[str, str]:
@@ -59,56 +66,18 @@ def create_app() -> FastAPI:
 
     @app.post("/chat")
     async def chat(req: ChatRequest) -> JSONResponse:
-        result = run_hub(hub, req.message)
-        # Convert any workout payload sitting inside sub_agent_output into the
-        # human-facing response text — keeps the response string self-contained.
-        rendered = _render_response(result["response"], result.get("workout"))
+        result = run_hub(hub, req.message, conversation_id=req.conversation_id)
         payload = {
-            "response": rendered,
+            "response": result["response"],
             "route": result.get("route"),
             "confidence": result.get("confidence"),
             "trace_id": result.get("trace_id"),
+            "conversation_id": result.get("conversation_id"),
+            "log_entry": result.get("log_entry"),
         }
         return JSONResponse(payload)
 
     return app
-
-
-def _render_response(text: str, workout: dict | None) -> str:
-    """If a structured workout came back, append a human-readable summary."""
-    if not workout or not isinstance(workout, dict) or "blocks" not in workout:
-        return text
-
-    lines: list[str] = []
-    if text and text.strip():
-        lines.append(text.strip())
-        lines.append("")
-
-    for block in workout["blocks"]:
-        name = block.get("name", "block").upper()
-        items = block.get("items", [])
-        if not items:
-            continue
-        lines.append(f"**{name}**")
-        for item in items:
-            label = item.get("exercise_name", "exercise")
-            sets = item.get("sets")
-            reps = item.get("reps")
-            duration = item.get("duration_seconds")
-            rest = item.get("rest_seconds")
-            side = item.get("side_note")
-            prescription = (
-                f"{sets}x{reps}"
-                if reps
-                else f"{sets}x{duration}s"
-                if duration
-                else f"{sets} sets"
-            )
-            side_str = f" ({side})" if side else ""
-            rest_str = f", rest {rest}s" if rest is not None else ""
-            lines.append(f"- {prescription} {label}{side_str}{rest_str}")
-        lines.append("")
-    return "\n".join(lines).rstrip()
 
 
 app = create_app()

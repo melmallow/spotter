@@ -6,8 +6,11 @@ import time
 from typing import Any
 
 from langchain_core.language_models.chat_models import BaseChatModel
+from langchain_core.messages import AIMessage, SystemMessage
 from langgraph.graph import END, START, StateGraph
 
+from spotter.config import MAX_HISTORY_TURNS
+from spotter.conversations import trim_history
 from spotter.llm import chat_model
 from spotter.logging_setup import get_logger
 from spotter.schemas import HubState
@@ -35,13 +38,20 @@ Keep answers concise (2-4 sentences) unless the user asks for more depth. Cite a
 
 
 def _answer(state: HubState, *, model: BaseChatModel) -> dict[str, Any]:
-    user_input = state["user_input"]
+    messages = state.get("messages") or []
+    if not messages:
+        return {
+            "sub_agent_output": {"answer": None, "error": "no messages"},
+            "final_response": "Sorry — no question to answer.",
+            "messages": [AIMessage(content="Sorry — no question to answer.")],
+        }
+    trimmed = trim_history(messages, MAX_HISTORY_TURNS)
     started = time.perf_counter()
     try:
         response = model.invoke(
             [
-                ("system", COACH_SYSTEM_PROMPT),
-                ("human", user_input),
+                SystemMessage(content=COACH_SYSTEM_PROMPT),
+                *trimmed,
             ]
         )
         answer = response.content if hasattr(response, "content") else str(response)
@@ -52,11 +62,11 @@ def _answer(state: HubState, *, model: BaseChatModel) -> dict[str, Any]:
             error_class=type(exc).__name__,
             latency_ms=int((time.perf_counter() - started) * 1000),
         )
+        text = "Sorry — I hit an error answering that. Try rephrasing?"
         return {
             "sub_agent_output": {"answer": None, "error": str(exc)},
-            "final_response": (
-                "Sorry — I hit an error answering that. Try rephrasing?"
-            ),
+            "final_response": text,
+            "messages": [AIMessage(content=text)],
         }
 
     latency_ms = int((time.perf_counter() - started) * 1000)
@@ -69,6 +79,7 @@ def _answer(state: HubState, *, model: BaseChatModel) -> dict[str, Any]:
     return {
         "sub_agent_output": {"answer": answer},
         "final_response": answer,
+        "messages": [AIMessage(content=answer)],
     }
 
 

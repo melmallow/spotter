@@ -1,210 +1,614 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Spotter</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link
-    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
-    rel="stylesheet"
-  />
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: {
-            navy: '#0B1A2E',
-            'navy-soft': '#13243a',
-            teal: '#14B8A6',
-            'teal-soft': '#A7F0E6',
-            surface: '#F8F9FB',
-            ink: '#1F2937',
-            muted: '#6B7280',
-          },
-          fontFamily: {
-            sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
-          },
-        },
-      },
-    };
-  </script>
-  <style>
-    html, body { font-family: 'Inter', system-ui, sans-serif; background: #F8F9FB; }
-    .bubble-user { background: #14B8A6; color: white; }
-    .bubble-agent { background: white; color: #1F2937; border: 1px solid #E5E7EB; }
-    .bubble-error { background: #FEF2F2; color: #7F1D1D; border: 1px solid #FCA5A5; }
-    /* Preserve newlines in agent responses so the workout layout reads cleanly */
-    .bubble-agent, .bubble-error { white-space: pre-wrap; }
-    .pulse-dot::after {
-      content: '';
-      display: inline-block;
-      width: 6px; height: 6px;
-      background: currentColor; border-radius: 50%;
-      animation: pulse 1.2s infinite ease-in-out;
-      margin-left: 6px;
-    }
-    @keyframes pulse {
-      0%, 80%, 100% { opacity: 0.2; }
-      40% { opacity: 1; }
-    }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Spotter</title>
+<link rel="icon" type="image/svg+xml" href="/static/favicon.svg" />
+<style>
+  :root {
+    --bg: #ECEEF0;
+    --bg-2: #E4E7E9;
+    --surface: #FFFFFF;
+    --surface-2: #F1F3F4;
+    --surface-3: #E7EAEC;
+    --line: rgba(15,25,26,0.10);
+    --line-2: rgba(15,25,26,0.16);
+    --text: #15191A;
+    --text-dim: #5B6568;
+    --text-faint: #8C9498;
+    --teal: #12A98D;
+    --teal-deep: #0C8E78;
+    --teal-ink: #FFFFFF;
+    --teal-glow: rgba(18,169,141,0.16);
+    --teal-bright: #34E0BE;
+    --ink: #14181A;
+    --radius: 18px;
+    --radius-sm: 12px;
+    --font: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, Inter, system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background:
+      radial-gradient(900px 500px at 82% -10%, rgba(18,169,141,0.07), transparent 60%),
+      var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    -webkit-font-smoothing: antialiased;
+    letter-spacing: -0.01em;
+    overflow: hidden;
+  }
+  .app { display: grid; grid-template-columns: 84px 1fr 420px; height: 100vh; }
+
+  /* full-color photos */
+  .photo { object-fit: cover; width: 100%; height: 100%; display: block; }
+
+  /* ---------- Rail ---------- */
+  .rail {
+    border-right: 1px solid rgba(0,0,0,0.25);
+    display: flex; flex-direction: column; align-items: center;
+    padding: 22px 0; gap: 10px;
+    background: linear-gradient(180deg, #222A2E 0%, #161B1E 48%, #0F1316 100%);
+  }
+  .logo {
+    width: 44px; height: 44px; border-radius: 15px;
+    background: var(--surface);
+    display: grid; place-items: center; color: var(--ink);
+    font-weight: 700; font-size: 21px; margin-bottom: 16px; letter-spacing: -0.02em;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.28);
+  }
+  .logo svg { width: 25px; height: 25px; }
+  .navbtn {
+    width: 46px; height: 46px; border-radius: 13px; border: 0;
+    background: transparent; color: rgba(255,255,255,0.5); cursor: pointer;
+    display: grid; place-items: center; transition: .18s; position: relative;
+  }
+  .navbtn svg { width: 22px; height: 22px; }
+  .navbtn:hover { color: #fff; background: rgba(255,255,255,0.08); transform: translateY(-1px); }
+  .navbtn.active {
+    color: var(--teal-bright);
+    background: rgba(18,169,141,0.16);
+    box-shadow: 0 0 0 1px rgba(52,224,190,0.28), 0 6px 18px rgba(18,169,141,0.28);
+  }
+  .navbtn.active::before {
+    content: ""; position: absolute; left: -22px; top: 12px; bottom: 12px;
+    width: 3px; border-radius: 3px; background: var(--teal-bright);
+    box-shadow: 0 0 10px rgba(52,224,190,0.6);
+  }
+  .rail .spacer { flex: 1; }
+  .avatar {
+    width: 40px; height: 40px; border-radius: 50%; position: relative;
+    background: linear-gradient(135deg, #3a4341, #242a28);
+    border: 1px solid rgba(255,255,255,0.18); display: grid; place-items: center;
+    font-weight: 600; font-size: 14px; color: rgba(255,255,255,0.82);
+  }
+  .avatar::before {
+    content: ""; position: absolute; top: -15px; left: 50%; transform: translateX(-50%);
+    width: 30px; height: 1px; background: rgba(255,255,255,0.14);
+  }
+
+  /* ---------- Main ---------- */
+  .main { overflow-y: auto; padding: 34px 40px 48px; }
+  .main::-webkit-scrollbar, .chatlog::-webkit-scrollbar { width: 8px; }
+  .main::-webkit-scrollbar-thumb, .chatlog::-webkit-scrollbar-thumb { background: var(--line-2); border-radius: 8px; }
+
+  .greeting { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 28px; }
+  .greeting .eyebrow { color: var(--teal); font-size: 13px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; }
+  .greeting h1 { font-size: 34px; font-weight: 700; margin-top: 6px; letter-spacing: -0.03em; }
+  .greeting .date { color: var(--text-dim); font-size: 14px; text-align: right; }
+
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px; }
+  .stat {
+    background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+    padding: 10px 18px; position: relative; overflow: hidden;
+  }
+  .stat .label { color: var(--text-dim); font-size: 13px; display: flex; align-items: center; gap: 7px; }
+  .stat .value { font-size: 23px; font-weight: 700; margin-top: 3px; letter-spacing: -0.03em; }
+  .stat .value small { font-size: 13px; font-weight: 500; color: var(--text-faint); }
+  .stat .spark { display: flex; align-items: flex-end; gap: 4px; height: 13px; margin-top: 7px; }
+  .stat .spark i { flex: 1; background: var(--surface-2); border-radius: 3px; }
+  .stat .spark i.on { background: linear-gradient(180deg, var(--teal), var(--teal-deep)); }
+  .stat .ring { position: absolute; top: 16px; right: 16px; }
+
+  .section-h { display: flex; align-items: center; justify-content: space-between; margin: 30px 2px 14px; }
+  .section-h h2 { font-size: 18px; font-weight: 600; letter-spacing: -0.02em; }
+  .section-h a { color: var(--teal); font-size: 13px; font-weight: 600; text-decoration: none; cursor: pointer; }
+
+  .plan {
+    background: var(--surface);
+    border: 1px solid var(--line); border-radius: var(--radius);
+    padding: 6px; display: flex; gap: 18px; align-items: stretch;
+    box-shadow: 0 1px 2px rgba(15,25,26,0.04), 0 10px 28px rgba(15,25,26,0.07);
+  }
+  .plan .thumb {
+    width: 188px; border-radius: 14px; flex-shrink: 0; overflow: hidden; position: relative;
+    background: linear-gradient(160deg, #cfd6d8, #aeb7ba);
+  }
+  .plan .body { padding: 18px 14px 18px 0; display: flex; flex-direction: column; }
+  .plan .tag { color: var(--teal); font-size: 12px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; }
+  .plan h3 { font-size: 21px; font-weight: 700; margin: 8px 0 6px; letter-spacing: -0.02em; }
+  .plan .meta { color: var(--text-dim); font-size: 14px; }
+  .plan .row { margin-top: auto; display: flex; gap: 10px; padding-top: 16px; }
+  .btn {
+    border: 0; cursor: pointer; font-family: var(--font); font-weight: 600; font-size: 14px;
+    border-radius: 11px; padding: 11px 18px; display: inline-flex; align-items: center; gap: 8px;
+    transition: .16s; letter-spacing: -0.01em;
+  }
+  .btn-primary { background: var(--ink); color: #fff; }
+  .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 10px 22px rgba(20,24,26,0.22); }
+  .btn-ghost { background: transparent; color: var(--text); border: 1px solid var(--line-2); }
+  .btn-ghost:hover { background: var(--surface); border-color: var(--text-faint); }
+
+  .actions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .action {
+    display: flex; align-items: center; gap: 10px;
+    background: var(--surface); border: 1px solid var(--line); border-radius: 12px;
+    padding: 10px 14px; cursor: pointer; transition: .16s; text-align: left;
+    color: var(--text); font-family: var(--font); font-weight: 600; font-size: 14px;
+  }
+  .action:hover { border-color: var(--teal-deep); background: var(--surface-2); transform: translateY(-1px); }
+  .action .qa-ic { width: 30px; height: 30px; border-radius: 9px; background: var(--teal-glow); color: var(--teal-deep); display: grid; place-items: center; flex-shrink: 0; }
+  .action .qa-ic svg { width: 17px; height: 17px; }
+  .action .qa-label { letter-spacing: -0.01em; }
+
+  .logs { display: flex; flex-direction: column; gap: 8px; }
+  .log {
+    display: flex; align-items: center; gap: 14px; padding: 14px 16px;
+    background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-sm);
+  }
+  .log .dot { width: 34px; height: 34px; border-radius: 10px; background: var(--surface-2); display: grid; place-items: center; color: var(--teal); flex-shrink: 0; }
+  .log .dot svg { width: 18px; height: 18px; }
+  .log .name { font-weight: 600; font-size: 14px; }
+  .log .sub { color: var(--text-dim); font-size: 13px; margin-top: 2px; }
+  .log .when { margin-left: auto; color: var(--text-faint); font-size: 13px; }
+  .log.empty { color: var(--text-dim); border-style: dashed; }
+  .log.empty .name { font-weight: 500; }
+
+  /* ---------- Chat ---------- */
+  .chat { border-left: 1px solid var(--line); background: linear-gradient(180deg, #F4F7FC 0%, #E2EAF6 55%, #D2DFF1 100%); display: flex; flex-direction: column; height: 100vh; }
+  .chat-head { padding: 22px 22px 16px; border-bottom: 1px solid rgba(120,145,185,0.22); background: rgba(255,255,255,0.82); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); box-shadow: 0 1px 0 rgba(255,255,255,0.6), 0 6px 18px rgba(60,90,140,0.06); position: relative; z-index: 2; }
+  .chat-head .title { display: flex; align-items: center; gap: 10px; }
+  .chat-head .pulse { width: 9px; height: 9px; border-radius: 50%; background: var(--teal-deep); box-shadow: 0 0 0 0 var(--teal-glow); animation: pulse 2.2s infinite; }
+  @keyframes pulse { 0%{box-shadow:0 0 0 0 rgba(52,224,190,.45)} 70%{box-shadow:0 0 0 10px rgba(52,224,190,0)} 100%{box-shadow:0 0 0 0 rgba(52,224,190,0)} }
+  .chat-head h3 { font-size: 16px; font-weight: 600; color: var(--text); }
+  .chat-head p { color: var(--text-dim); font-size: 13px; margin-top: 4px; }
+
+  .chatlog { flex: 1; overflow-y: auto; padding: 22px; display: flex; flex-direction: column; gap: 18px; }
+  .msg { max-width: 86%; animation: rise .35s cubic-bezier(.2,.8,.2,1) both; }
+  @keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  .msg.user { align-self: flex-end; }
+  .bubble {
+    border-radius: 16px; padding: 13px 16px; font-size: 14.5px; line-height: 1.55; word-wrap: break-word;
+  }
+  .msg.user .bubble { background: #C3D2E8; color: #1E2A38; font-weight: 500; border-bottom-right-radius: 5px; }
+  .msg.bot .bubble { background: rgba(255,255,255,0.7); border: 1px solid rgba(120,145,185,0.22); color: var(--text); border-bottom-left-radius: 5px; }
+  .msg.bot .bubble strong { color: var(--teal-deep); font-weight: 600; }
+  .route {
+    display: inline-flex; align-items: center; gap: 7px; margin-bottom: 8px;
+    font-size: 11px; font-weight: 600; letter-spacing: .03em; text-transform: uppercase;
+    color: var(--teal-deep); background: rgba(18,169,141,0.12); padding: 5px 10px; border-radius: 8px;
+  }
+  .route svg { width: 13px; height: 13px; }
+  .route .conf { color: var(--text-faint); font-weight: 500; }
+
+  .typing { display: inline-flex; gap: 4px; padding: 14px 16px; }
+  .typing i { width: 7px; height: 7px; border-radius: 50%; background: var(--text-faint); animation: blink 1.4s infinite both; }
+  .typing i:nth-child(2){ animation-delay: .2s } .typing i:nth-child(3){ animation-delay: .4s }
+  @keyframes blink { 0%,80%,100%{opacity:.25; transform:translateY(0)} 40%{opacity:1; transform:translateY(-3px)} }
+
+  .chips { display: flex; gap: 8px; padding: 0 22px 12px; flex-wrap: wrap; }
+  .chip {
+    border: 1px solid var(--line-2); background: var(--surface); color: var(--text-dim);
+    font-family: var(--font); font-size: 13px; font-weight: 500; cursor: pointer;
+    padding: 8px 13px; border-radius: 999px; transition: .15s; display: inline-flex; align-items: center; gap: 6px;
+  }
+  .chip svg { width: 14px; height: 14px; color: var(--teal-deep); }
+  .chip:hover { border-color: var(--teal-deep); color: var(--text); background: var(--surface-2); }
+
+  .composer { padding: 14px 18px 20px; border-top: 1px solid rgba(120,145,185,0.20); }
+  .composer .field {
+    display: flex; align-items: center; gap: 8px; background: #C3D2E8;
+    border: 1px solid rgba(120,145,185,0.28); border-radius: 15px; padding: 6px 6px 6px 16px; transition: .15s;
+  }
+  .composer .field:focus-within { border-color: var(--teal-deep); box-shadow: 0 0 0 4px var(--teal-glow); }
+  .composer input {
+    flex: 1; background: transparent; border: 0; outline: 0; color: var(--text);
+    font-family: var(--font); font-size: 14.5px; padding: 9px 0;
+  }
+  .composer input::placeholder { color: #5d6b7e; }
+  .send {
+    width: 40px; height: 40px; border-radius: 11px; border: 0; cursor: pointer; flex-shrink: 0;
+    background: var(--ink); color: #fff;
+    display: grid; place-items: center; transition: .15s;
+  }
+  .send:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(20,24,26,0.25); }
+  .send svg { width: 19px; height: 19px; }
+
+  /* ---------- In-chat workout card ---------- */
+  .wcard { background: #FFFFFF; border: 1px solid var(--line); border-radius: 14px; padding: 14px 15px; color: var(--text); border-bottom-left-radius: 5px; box-shadow: 0 1px 2px rgba(15,25,26,0.04); }
+  .wc-title { font-size: 15px; font-weight: 700; color: var(--text); letter-spacing: -0.01em; }
+  .wc-meta { color: var(--text-dim); font-size: 12.5px; margin-top: 2px; }
+  .wc-block { margin-top: 13px; }
+  .wc-bname { font-size: 11px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--teal-deep); margin-bottom: 4px; }
+  .wc-items .wc-ex { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-top: 1px solid var(--line); }
+  .wc-items .wc-ex:first-child { border-top: 0; }
+  .wc-exname { font-size: 13.5px; font-weight: 500; color: var(--text); }
+  .wc-exname .wc-side { color: var(--text-faint); font-weight: 400; }
+  .wc-presc { font-size: 12.5px; color: var(--text-dim); margin-top: 1px; }
+  .wc-swap { margin-left: auto; flex-shrink: 0; font-family: var(--font); font-size: 12px; color: var(--text-dim); border: 1px solid var(--line-2); background: var(--surface); border-radius: 8px; padding: 4px 9px; cursor: pointer; transition: .15s; }
+  .wc-swap:hover { border-color: var(--teal-deep); color: var(--teal-deep); }
+  .wc-actions { display: flex; gap: 8px; margin-top: 14px; }
+  .wc-btn { border: 0; cursor: pointer; font-family: var(--font); font-weight: 600; font-size: 13px; border-radius: 10px; padding: 9px 14px; display: inline-flex; align-items: center; gap: 7px; transition: .15s; }
+  .wc-btn svg { width: 15px; height: 15px; }
+  .wc-btn.start { background: linear-gradient(135deg, var(--teal), var(--teal-deep)); color: #fff; }
+  .wc-btn.start:hover { filter: brightness(1.06); }
+  .wc-btn.log { background: var(--surface-2); color: var(--text); border: 1px solid var(--line-2); }
+  .wc-btn.log:hover { background: var(--surface-3); }
+
+  /* ---------- Markdown rendering in chat bubbles ---------- */
+  .bubble .md-h { font-weight: 700; letter-spacing: -0.01em; margin: 12px 0 4px; line-height: 1.3; }
+  .bubble > .md-h:first-child { margin-top: 0; }
+  .bubble .md-h1 { font-size: 17px; }
+  .bubble .md-h2 { font-size: 15px; }
+  .bubble .md-h3, .bubble .md-h4, .bubble .md-h5, .bubble .md-h6 { font-size: 14px; }
+  .bubble p { margin: 8px 0; }
+  .bubble > p:first-child { margin-top: 0; }
+  .bubble > p:last-child { margin-bottom: 0; }
+  .bubble ul, .bubble ol { margin: 8px 0; padding-left: 20px; }
+  .bubble li { margin: 3px 0; }
+  .bubble blockquote { margin: 8px 0; padding: 7px 12px; border-left: 3px solid var(--teal); background: rgba(18,169,141,0.08); border-radius: 0 8px 8px 0; color: var(--text-dim); }
+  .bubble hr { border: 0; border-top: 1px solid var(--line); margin: 12px 0; }
+  .bubble code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.86em; background: rgba(15,25,26,0.07); padding: 1px 5px; border-radius: 5px; }
+  .bubble .md-tablewrap { overflow-x: auto; margin: 8px 0; }
+  .bubble .md-table { border-collapse: collapse; width: 100%; font-size: 13px; }
+  .bubble .md-table th, .bubble .md-table td { border: 1px solid var(--line); padding: 6px 9px; text-align: left; white-space: nowrap; }
+  .bubble .md-table th { background: rgba(15,25,26,0.04); font-weight: 600; }
+
+  @media (max-width: 1180px) { .app { grid-template-columns: 84px 1fr 360px; } }
+</style>
 </head>
-<body class="min-h-screen flex flex-col">
-  <header class="bg-navy text-white">
-    <div class="max-w-3xl mx-auto px-4 md:px-8 py-4 flex items-center justify-between">
-      <div class="flex items-center gap-3">
-        <div class="w-8 h-8 rounded-lg bg-teal flex items-center justify-center font-bold">F</div>
-        <span class="font-semibold tracking-tight">Spotter</span>
+<body>
+<div class="app">
+  <!-- Rail -->
+  <nav class="rail">
+    <div class="logo" title="Spotter"><svg viewBox="0 0 24 24" fill="currentColor" aria-label="Spotter"><rect x="1.6" y="8.6" width="3" height="6.8" rx="1.2"/><rect x="4.6" y="6.4" width="3" height="11.2" rx="1.4"/><rect x="7.4" y="10.5" width="9.2" height="3" rx="1.5"/><rect x="16.4" y="6.4" width="3" height="11.2" rx="1.4"/><rect x="19.4" y="8.6" width="3" height="6.8" rx="1.2"/></svg></div>
+    <button class="navbtn active" aria-label="Home" title="Home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11.5 12 4l9 7.5"/><path d="M5 10v10h14V10"/></svg></button>
+    <button class="navbtn" aria-label="Coach" title="Coach"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-4.35-9.5-9A5 5 0 0 1 12 6a5 5 0 0 1 9.5 6c-2.5 4.65-9.5 9-9.5 9z"/></svg></button>
+    <button class="navbtn" aria-label="Workouts" title="Workouts"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 6.5 17.5 17.5"/><path d="M4 8 8 4M16 20l4-4M2 10l2 2M20 14l2 2M10 2l2 2M14 18l2 2"/></svg></button>
+    <button class="navbtn" aria-label="Log" title="Log"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16M4 12h16M4 19h10"/></svg></button>
+    <button class="navbtn" aria-label="History" title="History"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></button>
+    <div class="spacer"></div>
+    <div class="avatar">MH</div>
+  </nav>
+
+  <!-- Main dashboard -->
+  <main class="main">
+    <div class="greeting">
+      <div>
+        <div class="eyebrow">Tuesday session</div>
+        <h1>Good evening, Melissa</h1>
       </div>
-      <span class="text-xs text-teal-soft uppercase tracking-widest">Multi-Agent Demo</span>
+      <div class="date" id="date">—</div>
     </div>
-  </header>
 
-  <main class="flex-1 px-4 md:px-8 py-10">
-    <section class="max-w-3xl mx-auto">
-      <h1 class="text-3xl md:text-5xl font-extrabold tracking-tight text-navy">
-        Your AI fitness coach.
-      </h1>
-      <p class="mt-3 text-muted text-lg">
-        Ask about exercises, build a workout, or log a session — three specialized agents, one chat.
-      </p>
+    <div class="stats">
+      <div class="stat">
+        <div class="label"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c1 4 5 5 5 9a5 5 0 0 1-10 0c0-2 1-3 2-4"/></svg> Day streak</div>
+        <div class="value">12 <small>days</small></div>
+        <div class="spark"><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i class="on"></i><i class="on"></i><i class="on"></i></div>
+      </div>
+      <div class="stat">
+        <div class="label"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg> This week</div>
+        <div class="value">4 <small>/ 5 sessions</small></div>
+        <div class="spark"><i class="on"></i><i class="on"></i><i></i><i class="on"></i><i class="on"></i><i></i><i></i></div>
+      </div>
+      <div class="stat">
+        <div class="label"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h3v10H4zM17 7h3v10h-3zM7 12h10M2 9v6M22 9v6"/></svg> Volume</div>
+        <div class="value">18.4k <small>lbs</small></div>
+        <div class="spark"><i></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></div>
+      </div>
+    </div>
 
-      <div
-        id="chat"
-        class="mt-8 bg-white rounded-2xl shadow-sm border border-gray-200 p-5 md:p-7 min-h-[320px] flex flex-col gap-3"
-        aria-live="polite"
-        aria-label="Conversation history"
-      >
-        <div class="bubble-agent rounded-xl px-4 py-3 max-w-[85%] self-start">
-          Hey — I'm Spotter. Try asking what muscles a deadlift works, asking
-          me to build a 30-minute upper-body workout, or logging a set you just
-          finished.
+    <div class="section-h"><h2>Today's plan</h2><a onclick="ask('Build me a fresh workout for today')">Regenerate ↗</a></div>
+    <div class="plan">
+      <div class="thumb"><img class="photo" alt="" src="/static/press.jpg"
+        onerror="imgChain(this,'https://images.pexels.com/photos/4720236/pexels-photo-4720236.jpeg?auto=compress&cs=tinysrgb&w=600')" /></div>
+      <div class="body">
+        <div class="tag">Upper body · dumbbell</div>
+        <h3>30-min push focus</h3>
+        <div class="meta">4 exercises · warmup + main + cooldown · ~310 kcal</div>
+        <div class="row">
+          <button class="btn btn-primary" onclick="ask('Start my 30-minute upper body workout')"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M8 5v14l11-7z"/></svg> Start session</button>
+          <button class="btn btn-ghost" onclick="ask('Show me the full exercise list for today')">View exercises</button>
         </div>
       </div>
+    </div>
 
-      <div class="mt-4 flex flex-wrap gap-2" aria-label="Example prompts">
-        <button
-          type="button"
-          class="example-chip px-3 py-1.5 text-sm rounded-full border border-teal text-teal hover:bg-teal hover:text-white transition"
-          data-prompt="What muscles does a Romanian deadlift work?"
-        >Coach a movement</button>
-        <button
-          type="button"
-          class="example-chip px-3 py-1.5 text-sm rounded-full border border-teal text-teal hover:bg-teal hover:text-white transition"
-          data-prompt="Build me a 30 minute upper body workout with dumbbells"
-        >Generate a workout</button>
-        <button
-          type="button"
-          class="example-chip px-3 py-1.5 text-sm rounded-full border border-teal text-teal hover:bg-teal hover:text-white transition"
-          data-prompt="I just did 3x10 bench press at 185 lbs"
-        >Log a set</button>
-      </div>
+    <div class="section-h"><h2>Quick actions</h2></div>
+    <div class="actions">
+      <button class="action" onclick="ask('What muscles does a Romanian deadlift work?')">
+        <span class="qa-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-4.35-9.5-9A5 5 0 0 1 12 6a5 5 0 0 1 9.5 6c-2.5 4.65-9.5 9-9.5 9z"/></svg></span>
+        <span class="qa-label">Coach a movement</span>
+      </button>
+      <button class="action" onclick="ask('Build me a 30-minute upper body workout with dumbbells')">
+        <span class="qa-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 2.5 5.5L20 9l-4 4 1 6-5-3-5 3 1-6-4-4 5.5-.5z"/></svg></span>
+        <span class="qa-label">Generate a workout</span>
+      </button>
+      <button class="action" onclick="ask('I just did 3x10 bench press at 185 lbs')">
+        <span class="qa-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>
+        <span class="qa-label">Log a set</span>
+      </button>
+    </div>
 
-      <form id="composer" class="mt-6 flex items-stretch gap-3">
-        <label class="sr-only" for="message">Message</label>
-        <input
-          id="message"
-          name="message"
-          type="text"
-          autocomplete="off"
-          required
-          placeholder="Ask, generate, or log…"
-          class="flex-1 rounded-xl border border-gray-300 px-4 py-3 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal"
-        />
-        <button
-          id="send"
-          type="submit"
-          class="rounded-xl bg-teal text-white font-semibold px-5 py-3 hover:bg-teal/90 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal focus-visible:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed"
-        >Send</button>
-      </form>
-      <p id="status" class="mt-2 text-sm text-muted h-5"></p>
-    </section>
+    <div class="section-h"><h2>Recent logs</h2><a id="logs-toggle" onclick="toggleLogs()" style="display:none">View all ↗</a></div>
+    <div class="logs" id="logs">
+      <div class="log empty"><div><div class="name">No logs yet this session</div><div class="sub">Tell the chat what you just did — Spotter will match it and add it here.</div></div></div>
+    </div>
   </main>
 
-  <footer class="text-xs text-muted text-center py-4">
-    Built for the Future Research AI Engineer take-home.
-  </footer>
+  <!-- Chat panel -->
+  <aside class="chat">
+    <div class="chat-head">
+      <div class="title"><span class="pulse"></span><h3>Spotter</h3></div>
+      <p>Coach · generate · log — one chat, three agents.</p>
+    </div>
+    <div class="chatlog" id="log"></div>
+    <div class="chips">
+      <button class="chip" onclick="ask('What muscles does a Romanian deadlift work?')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s-7-4.35-9.5-9A5 5 0 0 1 12 6a5 5 0 0 1 9.5 6c-2.5 4.65-9.5 9-9.5 9z"/></svg>Coach</button>
+      <button class="chip" onclick="askGenerate()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m12 3 2.5 5.5L20 9l-4 4 1 6-5-3-5 3 1-6-4-4 5.5-.5z"/></svg>Generate</button>
+      <button class="chip" onclick="ask('I just did 3x10 bench press at 185 lbs')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg>Log</button>
+    </div>
+    <div class="composer">
+      <form class="field" id="form" onsubmit="return submitMsg(event)">
+        <input id="input" autocomplete="off" placeholder="Ask, generate, or log…" />
+        <button class="send" type="submit" aria-label="Send"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M3.4 20.4 21 12 3.4 3.6 3 10l12 2-12 2z"/></svg></button>
+      </form>
+    </div>
+  </aside>
+</div>
 
-  <script>
-    const chat = document.getElementById('chat');
-    const composer = document.getElementById('composer');
-    const input = document.getElementById('message');
-    const sendBtn = document.getElementById('send');
-    const status = document.getElementById('status');
+<script>
+  const CONVERSATION_ID = crypto.randomUUID();
 
-    function addBubble(text, kind, routeLabel) {
-      const node = document.createElement('div');
-      node.className = `rounded-xl px-4 py-3 max-w-[85%] ${kind === 'user' ? 'self-end bubble-user' : kind === 'error' ? 'self-start bubble-error' : 'self-start bubble-agent'}`;
-      if (routeLabel) {
-        const tag = document.createElement('div');
-        tag.className = 'text-xs uppercase tracking-widest opacity-60 mb-1';
-        tag.textContent = routeLabel;
-        node.appendChild(tag);
+  const log = document.getElementById('log');
+  const input = document.getElementById('input');
+
+  // Image fallback: try local /static, then a grayscale stock photo, then reveal the gradient backdrop.
+  function imgChain(img, remote){
+    if (!img.dataset.tried && remote) { img.dataset.tried = '1'; img.src = remote; }
+    else { img.style.display = 'none'; }
+  }
+
+  document.getElementById('date').textContent =
+    new Date().toLocaleDateString(undefined, { weekday:'long', month:'long', day:'numeric' });
+
+  const ROUTES = {
+    COACH:           { label:'Coach',   icon:'M12 21s-7-4.35-9.5-9A5 5 0 0 1 12 6a5 5 0 0 1 9.5 6c-2.5 4.65-9.5 9-9.5 9z' },
+    WORKOUT_GENERATE:{ label:'Generate',icon:'m12 3 2.5 5.5L20 9l-4 4 1 6-5-3-5 3 1-6-4-4 5.5-.5z' },
+    WORKOUT_LOG:     { label:'Logged',  icon:'M20 6 9 17l-5-5' }
+  };
+
+  function esc(s){ return (s||'').replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
+  function escAttr(s){ return (s||'').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+  function inlineMd(s){
+    s = esc(s);
+    s = s.replace(/`([^`]+)`/g, '<code>$1</code>');
+    s = s.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+    s = s.replace(/\*([^*\n]+)\*/g, '<em>$1</em>');
+    s = s.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+    return s;
+  }
+  function mdSplitRow(line){
+    return line.trim().replace(/^\|/, '').replace(/\|$/, '').split('|').map(c => c.trim());
+  }
+  function mdTable(header, rows){
+    let h = '<div class="md-tablewrap"><table class="md-table"><thead><tr>'
+      + header.map(c => `<th>${inlineMd(c)}</th>`).join('') + '</tr></thead><tbody>';
+    rows.forEach(r => { h += '<tr>' + r.map(c => `<td>${inlineMd(c)}</td>`).join('') + '</tr>'; });
+    return h + '</tbody></table></div>';
+  }
+  function isSepRow(l){ return l != null && /\|/.test(l) && /^\s*\|?\s*:?-{2,}/.test(l); }
+  function fmt(src){
+    const lines = (src || '').split('\n');
+    let html = '', i = 0;
+    const isSpecial = (t) => t === '' || /^#{1,6}\s/.test(t) || /^>/.test(t)
+      || /^([-*]|\d+\.)\s/.test(t) || /^(---+|\*\*\*+|___+)$/.test(t);
+    while (i < lines.length){
+      const line = lines[i];
+      const t = line.trim();
+      if (/\|/.test(line) && isSepRow(lines[i+1])){
+        const header = mdSplitRow(line); i += 2;
+        const rows = [];
+        while (i < lines.length && /\|/.test(lines[i]) && lines[i].trim() !== ''){ rows.push(mdSplitRow(lines[i])); i++; }
+        html += mdTable(header, rows); continue;
       }
-      const body = document.createElement('div');
-      body.textContent = text;
-      node.appendChild(body);
-      chat.appendChild(node);
-      chat.scrollTop = chat.scrollHeight;
-      return node;
-    }
-
-    function setLoading(loading) {
-      sendBtn.disabled = loading;
-      input.disabled = loading;
-      sendBtn.textContent = loading ? 'Thinking' : 'Send';
-      sendBtn.classList.toggle('pulse-dot', loading);
-      status.textContent = loading ? 'Coach is thinking…' : '';
-    }
-
-    async function send(message) {
-      addBubble(message, 'user');
-      setLoading(true);
-      try {
-        const res = await fetch('/chat', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message }),
-        });
-        if (!res.ok) {
-          let detail = `Request failed (${res.status}).`;
-          try {
-            const body = await res.json();
-            if (body?.detail) detail = `Request failed: ${JSON.stringify(body.detail)}`;
-          } catch (_) {}
-          addBubble(detail, 'error');
-          return;
+      if (t === ''){ i++; continue; }
+      if (/^(---+|\*\*\*+|___+)$/.test(t)){ html += '<hr>'; i++; continue; }
+      const h = t.match(/^(#{1,6})\s+(.*)$/);
+      if (h){ html += `<div class="md-h md-h${h[1].length}">${inlineMd(h[2])}</div>`; i++; continue; }
+      if (/^>\s?/.test(t)){
+        const buf = [];
+        while (i < lines.length && /^>\s?/.test(lines[i].trim())){ buf.push(inlineMd(lines[i].trim().replace(/^>\s?/, ''))); i++; }
+        html += `<blockquote>${buf.join('<br>')}</blockquote>`; continue;
+      }
+      if (/^([-*]|\d+\.)\s+/.test(t)){
+        const ordered = /^\d+\.\s+/.test(t);
+        const items = [];
+        while (i < lines.length && /^\s*([-*]|\d+\.)\s+/.test(lines[i])){
+          items.push(inlineMd(lines[i].trim().replace(/^([-*]|\d+\.)\s+/, ''))); i++;
         }
-        const data = await res.json();
-        const tag = data.route ? `${data.route}${typeof data.confidence === 'number' ? ` · ${Math.round(data.confidence * 100)}%` : ''}` : null;
-        addBubble(data.response, 'agent', tag);
-      } catch (err) {
-        addBubble(`Network error: ${err.message}`, 'error');
-      } finally {
-        setLoading(false);
-        input.value = '';
-        input.focus();
+        const tag = ordered ? 'ol' : 'ul';
+        html += `<${tag}>` + items.map(x => `<li>${x}</li>`).join('') + `</${tag}>`; continue;
       }
+      const buf = [inlineMd(line)]; i++;
+      while (i < lines.length && !isSpecial(lines[i].trim()) && !(/\|/.test(lines[i]) && isSepRow(lines[i+1]))){
+        buf.push(inlineMd(lines[i])); i++;
+      }
+      html += `<p>${buf.join('<br>')}</p>`;
     }
+    return html;
+  }
 
-    composer.addEventListener('submit', (e) => {
-      e.preventDefault();
-      const message = input.value.trim();
-      if (!message) return;
-      send(message);
-    });
-
-    document.querySelectorAll('.example-chip').forEach((chip) => {
-      chip.addEventListener('click', () => {
-        input.value = chip.dataset.prompt;
-        input.focus();
+  function prescOf(it){
+    const base = it.reps ? `${it.sets} × ${it.reps}`
+      : it.duration_seconds ? `${it.sets} × ${it.duration_seconds}s`
+      : `${it.sets} sets`;
+    return base + (it.rest_seconds != null ? ` · rest ${it.rest_seconds}s` : '');
+  }
+  function renderWorkoutCard(w){
+    const blocks = Array.isArray(w.blocks) ? w.blocks : [];
+    let count = 0; blocks.forEach(b => count += (b.items || []).length);
+    const names = blocks.map(b => b.name).filter(Boolean).join(' · ');
+    const sub = w.notes ? esc(w.notes) : `${count} exercise${count===1?'':'s'} · ${esc(names)}`;
+    let body = '';
+    blocks.forEach(b => {
+      const items = b.items || [];
+      if (!items.length) return;
+      body += `<div class="wc-block"><div class="wc-bname">${esc(b.name||'block')}</div><div class="wc-items">`;
+      items.forEach(it => {
+        const nm = esc(it.exercise_name || 'Exercise')
+          + (it.side_note ? ` <span class="wc-side">(${esc(it.side_note)})</span>` : '');
+        const swap = escAttr(`Swap ${it.exercise_name || 'this exercise'} for a different exercise`);
+        body += `<div class="wc-ex"><div><div class="wc-exname">${nm}</div>`
+          + `<div class="wc-presc">${esc(prescOf(it))}</div></div>`
+          + `<button class="wc-swap" data-ask="${swap}">swap</button></div>`;
       });
+      body += `</div></div>`;
     });
+    return `<div class="wcard"><div class="wc-title">Your workout</div><div class="wc-meta">${sub}</div>${body}`
+      + `<div class="wc-actions">`
+      + `<button class="wc-btn start" data-ask="Start this workout"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>Start</button>`
+      + `<button class="wc-btn log" data-ask="Log all the exercises from this workout">Log all</button>`
+      + `</div></div>`;
+  }
 
-    input.focus();
-  </script>
+  function addUser(text){
+    const el = document.createElement('div');
+    el.className = 'msg user';
+    el.innerHTML = `<div class="bubble">${esc(text)}</div>`;
+    log.appendChild(el); scroll();
+  }
+  function addBot(text, route, conf, workout){
+    const el = document.createElement('div');
+    el.className = 'msg bot';
+    let html = '';
+    if (route && ROUTES[route]) {
+      const r = ROUTES[route];
+      const c = conf != null ? `<span class="conf">${Math.round(conf*100)}%</span>` : '';
+      html += `<div class="route"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="${r.icon}"/></svg>${r.label} ${c}</div>`;
+    }
+    if (text && text.trim()) html += `<div class="bubble">${fmt(text)}</div>`;
+    if (workout) html += renderWorkoutCard(workout);
+    el.innerHTML = html;
+    el.querySelectorAll('[data-ask]').forEach(b =>
+      b.addEventListener('click', () => ask(b.getAttribute('data-ask'))));
+    log.appendChild(el); scroll();
+  }
+  function addTyping(){
+    const el = document.createElement('div');
+    el.className = 'msg bot'; el.id = 'typing';
+    el.innerHTML = `<div class="bubble" style="padding:0"><div class="typing"><i></i><i></i><i></i></div></div>`;
+    log.appendChild(el); scroll();
+  }
+  function rmTyping(){ const t = document.getElementById('typing'); if (t) t.remove(); }
+  function scroll(){ log.scrollTop = log.scrollHeight; }
+
+  function ask(text){ input.value = text; send(text); }
+
+  function askGenerate(){
+    const groups = ['Chest','Back','Legs','Shoulders','Arms','Full body'];
+    const el = document.createElement('div');
+    el.className = 'msg bot';
+    const chipsHtml = groups.map(g => {
+      const prompt = escAttr(`Build me a workout for ${g.toLowerCase()}`);
+      return `<button class="chip" data-ask="${prompt}">${esc(g)}</button>`;
+    }).join('');
+    el.innerHTML = `<div class="bubble">Which muscle group?</div>`
+      + `<div class="chips" style="padding: 8px 0 0;">${chipsHtml}</div>`;
+    el.querySelectorAll('[data-ask]').forEach(b =>
+      b.addEventListener('click', () => ask(b.getAttribute('data-ask'))));
+    log.appendChild(el); scroll();
+  }
+  function submitMsg(e){ e.preventDefault(); const v = input.value.trim(); if (v) send(v); return false; }
+
+  async function send(text){
+    addUser(text); input.value = ''; addTyping();
+    try {
+      const res = await fetch('/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: text, conversation_id: CONVERSATION_ID })
+      });
+      if (!res.ok) throw new Error('Request failed (' + res.status + ')');
+      const d = await res.json();
+      rmTyping();
+      addBot(d.response, d.route, d.confidence, d.workout);
+      if (d.log_entry) recordLog(d.log_entry);
+    } catch (err) {
+      rmTyping();
+      addBot("Something went wrong reaching the coach. Check the server and try again.");
+    }
+  }
+
+  // --- Recent logs (session-scoped, sessionStorage) ---------------------------
+  const LOG_KEY = 'spotter.recentLogs';
+  const COLLAPSED_LIMIT = 5;
+  let logsExpanded = false;
+
+  function loadLogs(){
+    try { return JSON.parse(sessionStorage.getItem(LOG_KEY) || '[]'); }
+    catch { return []; }
+  }
+  function saveLogs(items){ sessionStorage.setItem(LOG_KEY, JSON.stringify(items)); }
+
+  function recordLog(entry){
+    const items = loadLogs();
+    items.unshift({ ...entry, logged_at: new Date().toISOString() });
+    saveLogs(items.slice(0, 50));
+    renderLogs();
+  }
+
+  function fmtPrescription(e){
+    const base = `${e.sets} × ${e.reps}`;
+    if (e.weight == null) return base;
+    const unit = e.weight_unit || 'lbs';
+    const w = Number.isInteger(e.weight) ? e.weight : Number(e.weight).toString();
+    return `${base} · ${w} ${unit}`;
+  }
+  function fmtWhen(iso){
+    const d = new Date(iso);
+    return d.toLocaleTimeString(undefined, { hour:'numeric', minute:'2-digit' });
+  }
+
+  function renderLogs(){
+    const wrap = document.getElementById('logs');
+    const toggle = document.getElementById('logs-toggle');
+    const items = loadLogs();
+    if (!items.length){
+      wrap.innerHTML = `<div class="log empty"><div><div class="name">No logs yet this session</div><div class="sub">Tell the chat what you just did — Spotter will match it and add it here.</div></div></div>`;
+      toggle.style.display = 'none';
+      return;
+    }
+    const shown = logsExpanded ? items : items.slice(0, COLLAPSED_LIMIT);
+    const check = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>`;
+    wrap.innerHTML = shown.map(e =>
+      `<div class="log"><div class="dot">${check}</div>` +
+      `<div><div class="name">${esc(e.exercise_name || 'Exercise')}</div>` +
+      `<div class="sub">${esc(fmtPrescription(e))}</div></div>` +
+      `<div class="when">${esc(fmtWhen(e.logged_at))}</div></div>`
+    ).join('');
+    if (items.length > COLLAPSED_LIMIT){
+      toggle.style.display = '';
+      toggle.textContent = logsExpanded ? 'Show fewer ↗' : `View all (${items.length}) ↗`;
+    } else {
+      toggle.style.display = 'none';
+    }
+  }
+  function toggleLogs(){ logsExpanded = !logsExpanded; renderLogs(); }
+
+  renderLogs();
+  addBot("Hey — I'm Spotter. Ask what muscles a deadlift works, have me build a 30-minute upper-body session, or just tell me a set you finished and I'll log it.");
+</script>
 </body>
 </html>

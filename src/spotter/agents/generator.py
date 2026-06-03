@@ -7,9 +7,17 @@ import time
 from typing import Any
 
 from langchain_core.language_models.chat_models import BaseChatModel
-from langchain_core.messages import AIMessage, HumanMessage, SystemMessage, ToolMessage
+from langchain_core.messages import (
+    AIMessage,
+    BaseMessage,
+    HumanMessage,
+    SystemMessage,
+    ToolMessage,
+)
 from langgraph.graph import END, START, StateGraph
 
+from spotter.config import MAX_HISTORY_TURNS
+from spotter.conversations import trim_history
 from spotter.llm import chat_model
 from spotter.logging_setup import get_logger
 from spotter.schemas import HubState
@@ -57,32 +65,38 @@ Constraints:
 _MAX_TOOL_LOOPS = 6
 
 
+def _init_scratch(state: HubState) -> dict[str, Any]:
+    """Build the generator's tool-call working list from the conversation transcript."""
+    messages = state.get("messages") or []
+    trimmed = trim_history(messages, MAX_HISTORY_TURNS)
+    scratch: list[BaseMessage] = [
+        SystemMessage(content=GENERATOR_SYSTEM_PROMPT),
+        *trimmed,
+    ]
+    return {"generator_scratch": scratch}
+
+
 def _agent_node(
     state: HubState, *, model: BaseChatModel, tools: list[Any]
 ) -> dict[str, Any]:
-    messages = state.get("messages") or []
-    if not messages:
-        messages = [
-            SystemMessage(content=GENERATOR_SYSTEM_PROMPT),
-            HumanMessage(content=state["user_input"]),
-        ]
-
+    scratch = state["generator_scratch"]
     bound = model.bind_tools(tools)
     started = time.perf_counter()
-    response: AIMessage = bound.invoke(messages)
+    response: AIMessage = bound.invoke(scratch)
     log.info(
         "agent_step",
         success=True,
         has_tool_calls=bool(getattr(response, "tool_calls", None)),
         latency_ms=int((time.perf_counter() - started) * 1000),
     )
-    return {"messages": messages + [response]}
+    return {"generator_scratch": scratch + [response]}
 
 
 def _tools_node(
     state: HubState, *, tools_by_name: dict[str, Any]
 ) -> dict[str, Any]:
-    last = state["messages"][-1]
+    scratch = state["generator_scratch"]
+    last = scratch[-1]
     tool_messages: list[ToolMessage] = []
     for call in getattr(last, "tool_calls", []) or []:
         tool = tools_by_name.get(call["name"])
@@ -110,21 +124,22 @@ def _tools_node(
                 tool_call_id=call.get("id", "unknown"),
             )
         )
-    return {"messages": list(state["messages"]) + tool_messages}
+    return {"generator_scratch": scratch + tool_messages}
 
 
 def _should_continue(state: HubState) -> str:
-    last = state["messages"][-1]
+    last = state["generator_scratch"][-1]
     if getattr(last, "tool_calls", None):
         return "tools"
     return "finalize"
 
 
 def _finalize(state: HubState) -> dict[str, Any]:
+    scratch = state["generator_scratch"]
     last_ai = next(
         (
             m
-            for m in reversed(state["messages"])
+            for m in reversed(scratch)
             if isinstance(m, AIMessage) and not m.tool_calls
         ),
         None,
@@ -135,9 +150,8 @@ def _finalize(state: HubState) -> dict[str, Any]:
         else "I couldn't put a workout together — please try a different request."
     )
 
-    # Extract the most recent build_workout tool result for the sub_agent_output
     workout_payload: dict | None = None
-    for m in reversed(state["messages"]):
+    for m in reversed(scratch):
         if isinstance(m, ToolMessage):
             try:
                 payload = json.loads(m.content)
@@ -150,6 +164,7 @@ def _finalize(state: HubState) -> dict[str, Any]:
     return {
         "sub_agent_output": {"workout": workout_payload, "narrative": text},
         "final_response": text,
+        "messages": [AIMessage(content=text)],
     }
 
 
@@ -159,12 +174,14 @@ def build_generator_subgraph(model: BaseChatModel | None = None):
     tools_by_name = {t.name: t for t in tools}
 
     graph = StateGraph(HubState)
+    graph.add_node("init", _init_scratch)
     graph.add_node("agent", lambda s: _agent_node(s, model=chat, tools=tools))
     graph.add_node(
         "tools", lambda s: _tools_node(s, tools_by_name=tools_by_name)
     )
     graph.add_node("finalize", _finalize)
-    graph.add_edge(START, "agent")
+    graph.add_edge(START, "init")
+    graph.add_edge("init", "agent")
     graph.add_conditional_edges(
         "agent",
         _should_continue,
