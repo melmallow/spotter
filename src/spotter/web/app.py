@@ -74,6 +74,7 @@ def create_app() -> FastAPI:
             "trace_id": result.get("trace_id"),
             "conversation_id": result.get("conversation_id"),
             "log_entry": result.get("log_entry"),
+            "workout": result.get("workout"),
         }
         return JSONResponse(payload)
 
