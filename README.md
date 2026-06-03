@@ -2,6 +2,10 @@
 
 A LangGraph hub agent that routes user requests across three intents — coach a movement, generate a workout, log a workout — to specialized sub-agents backed by Anthropic Claude and a 50-exercise dataset. Built for the [Future Research AI Engineer take-home](https://github.com/future-research/candidate-assessment/blob/main/1-multi-agent/ASSESSMENT.md).
 
+**Live demo:** https://spotter-production-e724.up.railway.app
+
+**Walkthrough video:** https://www.youtube.com/watch?v=hkPhCSb-Q6c
+
 ## Quick start
 
 ```bash
