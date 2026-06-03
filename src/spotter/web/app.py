@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 import uuid
 from pathlib import Path
 
@@ -79,43 +78,6 @@ def create_app() -> FastAPI:
         return JSONResponse(payload)
 
     return app
-
-
-def _render_response(text: str, workout: dict | None) -> str:
-    """If a structured workout came back, append a human-readable summary."""
-    if not workout or not isinstance(workout, dict) or "blocks" not in workout:
-        return text
-
-    lines: list[str] = []
-    if text and text.strip():
-        lines.append(text.strip())
-        lines.append("")
-
-    for block in workout["blocks"]:
-        name = block.get("name", "block").upper()
-        items = block.get("items", [])
-        if not items:
-            continue
-        lines.append(f"**{name}**")
-        for item in items:
-            label = item.get("exercise_name", "exercise")
-            sets = item.get("sets")
-            reps = item.get("reps")
-            duration = item.get("duration_seconds")
-            rest = item.get("rest_seconds")
-            side = item.get("side_note")
-            prescription = (
-                f"{sets}x{reps}"
-                if reps
-                else f"{sets}x{duration}s"
-                if duration
-                else f"{sets} sets"
-            )
-            side_str = f" ({side})" if side else ""
-            rest_str = f", rest {rest}s" if rest is not None else ""
-            lines.append(f"- {prescription} {label}{side_str}{rest_str}")
-        lines.append("")
-    return "\n".join(lines).rstrip()
 
 
 app = create_app()
