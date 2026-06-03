@@ -30,6 +30,47 @@ uv run python -m spotter.evals --suite all       # ~$0.50 full sweep
 
 See `evals/README.md` for what each suite measures and where to record the baseline numbers. The eval suite hits real Claude — `tests/` does not.
 
+## Observability
+
+Every request emits structured JSON to `logs/trace.jsonl` and stdout, tagged with a per-request `trace_id` so a single user message can be walked end-to-end across the hub, router, sub-agents, and tools. Built on `structlog` + `contextvars` (one config in `src/spotter/logging_setup.py`); propagates cleanly across async sub-graph calls without per-call plumbing. `logs/` is gitignored — populate it by running `uv run pytest` or sending any request through the demo.
+
+Sample — a routing decision:
+
+```json
+{"event": "routed", "route": "WORKOUT_LOG", "confidence": 0.95, "clarification_needed": false, "latency_ms": 1129, "success": true, "trace_id": "req-6ac153e3c868", "conversation_id": "conv-...", "level": "info", "timestamp": "2026-06-03T04:27:17Z"}
+```
+
+Ten event types instrument the full call graph; fields beyond `trace_id` / `timestamp` / `level`:
+
+| Event | Fields |
+|---|---|
+| `hub_request` | `user_input`, `conversation_id` |
+| `routed` | `route`, `confidence`, `clarification_needed`, `latency_ms`, `success`, `error_class` |
+| `agent_step` | `has_tool_calls`, `latency_ms`, `success` |
+| `tool_call` | `tool_name`, `result_size`, `empty_reason`, `success`, `error_class` |
+| `log_extracted` | `sets`, `reps`, `latency_ms`, `success`, `error_class` |
+| `log_matched` | `exercise_id`, `matched`, `top_score`, `candidates`, `movement_keyword`, `pool_size` |
+| `coach_answered` | `length`, `latency_ms`, `success` |
+| `clarification_emitted` | `offered` |
+| `hub_response` | `route`, `confidence`, `clarification_needed`, `latency_ms` |
+| `hub_error` | `error`, `error_class`, `latency_ms` |
+
+Queryable with `jq` — three useful examples (`fromjson?` skips any non-structlog stdlib lines):
+
+```bash
+# walk a single request
+jq -R 'fromjson? | select(.trace_id=="req-6ac153e3c868")' logs/trace.jsonl
+
+# tool-call failures vs total
+jq -Rn '[inputs | fromjson? | select(.event=="tool_call")] | "\(map(select(.success==false)) | length) failures out of \(length)"' logs/trace.jsonl
+
+# mean latency per route
+jq -Rr 'fromjson? | select(.event=="hub_response") | "\(.route) \(.latency_ms)"' logs/trace.jsonl \
+  | awk '{s[$1]+=$2; n[$1]++} END {for (r in n) printf "%-18s mean=%dms (n=%d)\n", r, s[r]/n[r], n[r]}'
+```
+
+No external backend wired — Langfuse or OpenTelemetry exporters are v2 work that would slot in alongside the existing structlog config.
+
 ## Architecture
 
 ```mermaid
@@ -60,7 +101,7 @@ flowchart TD
 
 **The coach** is a single sonnet call with a scope-guard prompt that names what it covers (exercises, anatomy, programming concepts) and redirects off-topic asks back to fitness.
 
-**Observability** rides on `structlog` with `contextvars`. The FastAPI middleware binds a fresh `trace_id` per request; every routing decision, tool invocation, and sub-agent response emits a JSON line to both stdout and `logs/trace.jsonl`. Grep by `event` to walk a single request: `hub_request → routed → tool_call → ... → hub_response`.
+**Observability** is structured-JSON tracing via `structlog` + `contextvars` — the FastAPI middleware binds a fresh `trace_id` per request and propagates it across async sub-graph calls. Sample line, event schema, and `jq` queries are in the [Observability](#observability) section above.
 
 ## Example transcripts
 
