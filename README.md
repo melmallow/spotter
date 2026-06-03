@@ -19,7 +19,7 @@ Then open the URL and try the chips below the chat input — one prompt per rout
 uv run pytest -v
 ```
 
-Nine deterministic tests across two critical-path test files, no real API calls. See `tests/README.md` for why these two paths matter most.
+26 deterministic tests across 8 files, no real API calls. Two of those files are the assessment's required "critical paths" — `test_router_clarification.py` (low-confidence routing → clarification, never silent misroute) and `test_generator_empty_search.py` (empty-search recovery, `avoid_joints` injury filter, bilateral side-flip). See `tests/README.md` for why those two carry the most weight. The other six files cover multi-turn conversation threading and disambiguation resume (`test_multiturn_disambiguation.py`, `test_conversation_threading.py`, `test_conversations.py`), the logger's movement-keyword candidate-pool bias (`test_logger_movement_bias.py`), and the coach + clarification subgraphs (`test_coach.py`, `test_clarification.py`).
 
 ## Run the evals
 
@@ -91,17 +91,21 @@ flowchart TD
     Hub --> Response([Final response])
 ```
 
-**The hub** is a typed `StateGraph` whose nodes are compiled subgraphs (not inlined functions), wired with explicit edges and a single conditional edge from the router. Each sub-agent owns its own graph and is composed into the hub via `add_node(name, compiled_subgraph)`.
+**The hub** is a typed `StateGraph` whose nodes are compiled subgraphs (not inlined functions), wired with explicit edges and a single conditional edge from the router. Each sub-agent owns its own graph and is composed into the hub via `add_node(name, compiled_subgraph)`. State carries a `messages: list[BaseMessage]` channel with LangGraph's `add_messages` reducer, so every turn appends to the conversation rather than overwriting it.
+
+**Multi-turn memory.** The web app compiles the hub with a `MemorySaver` checkpointer; each `/chat` request passes the client's `conversation_id` as LangGraph's `thread_id`, which rehydrates prior turns from the checkpointer before invoking the graph. Sub-agents read `state["messages"]`, trim to the last `MAX_HISTORY_TURNS=8` turns via `spotter.conversations.trim_history` (drops a leading orphan AIMessage so the trimmed list always starts with a HumanMessage), and pass the window to the LLM. Storage is in-process — restart drops history; durable session storage is v2 work.
 
 **The router** uses Claude haiku with `with_structured_output(RouteDecision)` to classify intent and self-report confidence in `[0, 1]`. When confidence < 0.6 or the route is `UNKNOWN`, the graph routes to a clarification node that names the two most likely routes. Routing errors fall back to clarification, never to silent misroute.
 
 **The workout generator** is a tool-calling agent over two Pydantic-bound tools. `search_exercises` filters by muscle group, equipment, movement pattern, and an optional `avoid_joints` exclusion (the injury filter). `build_workout` resolves selected exercise IDs into warmup / main / cooldown blocks with sets, reps, and rest; for any selected exercise marked `is_bilateral=True`, the tool auto-appends a second `(other side)` set of the same record. (The dataset's `bilateral_pair_id` values do not resolve to real records, so we use the same record with a flipped side label rather than synthesizing a virtual pair.)
 
-**The workout logger** runs Claude haiku with `with_structured_output(LogEntry)` to extract sets / reps / weight / unit, then fuzzy-matches the user's exercise name to the dataset with RapidFuzz `WRatio`. Matches above the threshold return a resolved log; below, the top-3 candidates surface so the user can disambiguate instead of the system guessing.
+**The workout logger** runs Claude haiku with `with_structured_output(LogEntry)` to extract sets / reps / weight / unit plus a `movement_keyword` (e.g. `row`, `press`, `curl`, `deadlift`) that names the dominant pattern. If the keyword has any hits in the dataset, fuzzy matching runs against that filtered pool instead of the full 50 records — this stops WRatio from over-weighting an equipment token like "Dumbbell" and steering "dumbbell rows" to "Alternating Dumbbell Decline Bench Press". An empty bias pool falls back to the full dataset. Matches above `FUZZY_MATCH_THRESHOLD=75` return a resolved log; below threshold, the top-3 candidates surface as a disambiguation question — and because the trimmed conversation is passed to the next extraction, when the user replies with a candidate name the logger merges the prior turn's sets/reps/weight with the chosen exercise instead of starting over.
 
 **The coach** is a single sonnet call with a scope-guard prompt that names what it covers (exercises, anatomy, programming concepts) and redirects off-topic asks back to fitness.
 
 **Observability** is structured-JSON tracing via `structlog` + `contextvars` — the FastAPI middleware binds a fresh `trace_id` per request and propagates it across async sub-graph calls. Sample line, event schema, and `jq` queries are in the [Observability](#observability) section above.
+
+**The web app** is a single FastAPI route at `POST /chat` plus a static dashboard at `GET /`. The dashboard renders a left nav rail, a greeting + (placeholder) stats row, three quick-action chips (one per route), a side-by-side `My workouts` / `Recent logs` layout with pagination and per-log delete, and a right-hand chat panel. The chat panel binds a fresh `conversation_id = crypto.randomUUID()` on page load and sends it with every request; the injury chips above the composer feed `avoid_joints` into `WORKOUT_GENERATE`, and successful `WORKOUT_LOG` responses append to Recent Logs from the structured `log_entry` field of the `/chat` JSON. Tailwind is loaded via CDN so the reviewer can open the page with no build step.
 
 ## Example transcripts
 
@@ -126,11 +130,16 @@ flowchart TD
 
 > **User:** I just did 3x10 bench press at 185 lbs
 >
-> **Logger** (haiku + WRatio) → "Logged: 3x10 Barbell Decline Bench Press at 185 lbs." (The dataset doesn't carry a generic "Bench Press" — WRatio scored Decline highest; reviewer can see all three candidates in the trace log.)
+> **Logger** (haiku + WRatio over the `press` keyword pool) → "Logged: 3x10 Barbell Flat Bench Press at 185 lbs." (Match score and all three candidates land in `logs/trace.jsonl` under `event=log_matched`.)
 
 > **User:** Bench press
 >
 > **Router → Clarification** → "I'm not sure what you meant — would you like me to build you a workout or log a workout you just finished? A bit more detail will help me route correctly."
+
+> **User (turn 1):** 4x6 rows at 95 lbs
+> **Logger** → "I couldn't confidently match 'rows'. Did you mean one of: 'Bent-Over Barbell Row', 'Single-Arm Dumbbell Row', 'Seated Cable Row'?"
+> **User (turn 2):** the cable one
+> **Logger** (rehydrated history → merge prior sets/reps/weight with chosen exercise) → "Logged: 4x6 Seated Cable Row at 95 lbs."
 
 ## Design decisions
 
@@ -142,16 +151,19 @@ flowchart TD
 | Sub-agents as separate `StateGraph` subgraphs | The PRD called for this. It also makes each agent unit-testable in isolation. |
 | FastAPI single-page + Tailwind via CDN | "Simple web view is fine" per PRD; CDN avoids a build step so the reviewer can open the page immediately. |
 | RapidFuzz `WRatio` for exercise-name match | `token_set_ratio` scored too low against full canonical names ("bench press" vs "Barbell Flat Bench Press"); WRatio combines strategies and handles partial substring matches. |
-| Bilateral side-flip inside `build_workout` | Dataset's `bilateral_pair_id` values do not resolve to real records. Flipping a side label on the same record satisfies AE5 without inventing IDs. |
+| Movement-keyword candidate pool in the logger | Filters the 50-record dataset down to a keyword pool (`row`, `press`, `curl`, …) before WRatio runs. Eliminates the WRatio over-weighting failure mode (e.g. "dumbbell rows" → "Alternating Dumbbell Decline Bench Press"). Falls back to the full dataset if the pool is empty. |
+| Bilateral side-flip inside `build_workout` | Dataset's `bilateral_pair_id` values do not resolve to real records. Flipping a side label on the same record satisfies the requirement without inventing IDs. |
+| LangGraph `MemorySaver` keyed by `conversation_id` (= `thread_id`) | Lets the assessment's stretch goal (multi-turn memory) land with one composable line — `build_hub(checkpointer=MemorySaver())` — and propagates the conversation through every sub-agent via the existing `messages` channel. In-process only by design for v1. |
 | `structlog` with `contextvars` for `trace_id` | One global config, cleanly propagates across async sub-graph calls — `RunnableConfig` callbacks would be more code for the same effect. |
 | `uv` + `pyproject.toml` + `src/` layout | Fast install for the reviewer, modern Python defaults. |
 
 ## Known limits
 
 - No streaming responses — `/chat` returns one JSON payload.
-- No multi-turn conversation memory — each `/chat` request is independent. The clarification flow uses example-prompt chips and request re-submission, not threaded context.
+- Multi-turn memory is **in-process only** — `MemorySaver` lives in the FastAPI process, so a restart drops every conversation. Durable per-user history (Postgres, Redis) is v2.
 - No Langfuse or OpenTelemetry — observability is `structlog` only.
-- No authentication, persistence, or rate limiting.
+- No authentication or rate limiting.
+- Dashboard stats (day streak, weekly sessions, volume) and the "30-min push focus" workout card are static placeholders in `index.html` — the only live wiring is the chat panel, the injury chips that feed `WORKOUT_GENERATE`, and the Recent Logs list (populated from `WORKOUT_LOG` responses with client-side per-log delete).
 - Coach responses about exercises NOT in the 50-record dataset use Claude's general knowledge; the scope-guard prompt nudges the model toward fitness, but factuality is best-effort.
 
 ## How I would evaluate this system in production
@@ -170,56 +182,64 @@ The starting point is `evals/`. It runs today against real Claude and reports co
 
 **Failure-mode catalog grepable from `logs/trace.jsonl`.** Every error class lands in the structured log with `event=hub_error|validation_error|tool_call success=false`. Searching for those events surfaces the failure population. A weekly report `jq 'select(.event=="hub_error")' logs/trace.jsonl | sort | uniq -c` (or equivalent in a real log pipeline) is the starting tripwire.
 
-What the system would lose under traffic that v1 doesn't address: real per-user persistence (currently in-memory only), rate-limiting per IP, stateful conversation context across requests, and a proper observability backend (Langfuse, OpenTelemetry, or equivalent). These are explicit v2 work — they're called out in the brainstorm's Scope Boundaries.
+What the system would lose under traffic that v1 doesn't address: durable per-user persistence (today's `MemorySaver` lives in-process and drops on restart), rate-limiting per IP, authentication, and a proper observability backend (Langfuse, OpenTelemetry, or equivalent). These are explicit v2 work — they're called out in the brainstorm's Scope Boundaries.
 
 ## Repo layout
 
 ```
-fitness/
-├── exercises.json                   # 50-exercise dataset (provided)
+spotter/
+├── exercises.json                       # 50-exercise dataset (provided)
 ├── pyproject.toml
 ├── src/spotter/
-│   ├── __main__.py                  # launches the FastAPI demo
-│   ├── config.py                    # env vars + thresholds
-│   ├── data.py                      # dataset loader + indexes
-│   ├── schemas.py                   # HubState + structured-output models
-│   ├── llm.py                       # Anthropic factory (haiku|sonnet)
-│   ├── logging_setup.py             # structlog + contextvars
-│   ├── hub.py                       # hub StateGraph + run_hub
+│   ├── __main__.py                      # launches the FastAPI demo
+│   ├── config.py                        # env vars + thresholds (CONFIDENCE, FUZZY, MAX_HISTORY_TURNS)
+│   ├── data.py                          # dataset loader + indexes
+│   ├── schemas.py                       # HubState + structured-output models
+│   ├── llm.py                           # Anthropic factory (haiku|sonnet)
+│   ├── logging_setup.py                 # structlog + contextvars
+│   ├── conversations.py                 # trim_history — last-N-turns window with orphan-AI drop
+│   ├── hub.py                           # hub StateGraph + run_hub (passes thread_id = conversation_id)
 │   ├── agents/
 │   │   ├── router.py
 │   │   ├── clarification.py
 │   │   ├── coach.py
-│   │   ├── logger.py
+│   │   ├── logger.py                    # haiku + LogEntry + movement-keyword candidate pool
 │   │   └── generator.py
 │   ├── tools/
 │   │   ├── search_exercises.py
 │   │   └── build_workout.py
 │   ├── web/
-│   │   ├── app.py                   # FastAPI + /chat
-│   │   ├── __main__.py              # uvicorn entrypoint
-│   │   └── templates/index.html     # Tailwind + Inter
+│   │   ├── app.py                       # FastAPI + /chat (MemorySaver checkpointer)
+│   │   ├── __main__.py                  # uvicorn entrypoint
+│   │   ├── static/                      # category images, favicon
+│   │   └── templates/index.html         # dashboard + chat + injury chips
 │   └── evals/
-│       ├── __main__.py              # CLI: --suite routing|ambiguous|...|all
+│       ├── __main__.py                  # CLI: --suite routing|ambiguous|unavailable_equipment|coach|all
 │       ├── runner.py
 │       ├── metrics.py
 │       └── judge.py
-├── tests/
-│   ├── README.md                    # explains why these two paths matter
-│   ├── conftest.py                  # FakeStructuredChatModel wrapper
-│   ├── test_router_clarification.py # critical path #1
-│   └── test_generator_empty_search.py # critical path #2
+├── tests/                               # 26 tests, all mocked (no real Claude calls)
+│   ├── README.md                        # why test_router_clarification + test_generator_empty_search
+│   ├── conftest.py                      # FakeStructuredChatModel wrapper
+│   ├── test_router_clarification.py     # critical path #1 (5 tests)
+│   ├── test_generator_empty_search.py   # critical path #2 (5 tests)
+│   ├── test_conversations.py            # trim_history correctness (6 tests)
+│   ├── test_conversation_threading.py   # MemorySaver isolation by conversation_id (2 tests)
+│   ├── test_multiturn_disambiguation.py # logger merges sets/reps from prior turn (3 tests)
+│   ├── test_logger_movement_bias.py     # keyword pool bias + fallback (3 tests)
+│   ├── test_coach.py                    # coach reads history, returns AIMessage (1 test)
+│   └── test_clarification.py            # clarification node returns AIMessage (1 test)
 ├── evals/
 │   ├── README.md
-│   ├── data/                        # labeled prompt sets
-│   └── results/                     # gitignored — runner output
-├── logs/                            # gitignored — trace.jsonl
+│   ├── data/                            # labeled prompt sets: routing, ambiguous, unavailable_equipment, coach
+│   └── results/                         # gitignored — runner output
+├── logs/                                # gitignored — trace.jsonl
 └── docs/
-    ├── brainstorms/                 # requirements doc
-    └── plans/                       # implementation plan
+    ├── brainstorms/                     # requirements docs (initial + multi-turn + my-workouts + render cleanup)
+    └── plans/                           # implementation plans (initial + multi-turn + render cleanup)
 ```
 
-The `docs/brainstorms/` and `docs/plans/` markdown files are the requirements + implementation plan I wrote before writing the code; they're checked in to make the engineering process visible to reviewers.
+The `docs/brainstorms/` and `docs/plans/` markdown files are the requirements + implementation plans I wrote before each chunk of work; they're checked in to make the engineering process visible to reviewers.
 
 ## License
 
