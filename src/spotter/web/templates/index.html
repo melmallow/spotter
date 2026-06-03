@@ -98,20 +98,20 @@
   .greeting h1 { font-size: 34px; font-weight: 700; margin-top: 6px; letter-spacing: -0.03em; }
   .greeting .date { color: var(--text-dim); font-size: 14px; text-align: right; }
 
-  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px; }
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 8px; }
   .stat {
     background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
-    padding: 10px 18px; position: relative; overflow: hidden;
+    padding: 7px 16px; position: relative; overflow: hidden;
   }
-  .stat .label { color: var(--text-dim); font-size: 13px; display: flex; align-items: center; gap: 7px; }
-  .stat .value { font-size: 23px; font-weight: 700; margin-top: 3px; letter-spacing: -0.03em; }
-  .stat .value small { font-size: 13px; font-weight: 500; color: var(--text-faint); }
-  .stat .spark { display: flex; align-items: flex-end; gap: 4px; height: 13px; margin-top: 7px; }
+  .stat .label { color: var(--text-dim); font-size: 12.5px; display: flex; align-items: center; gap: 7px; }
+  .stat .value { font-size: 20px; font-weight: 700; margin-top: 2px; letter-spacing: -0.03em; }
+  .stat .value small { font-size: 12.5px; font-weight: 500; color: var(--text-faint); }
+  .stat .spark { display: flex; align-items: flex-end; gap: 4px; height: 9px; margin-top: 5px; }
   .stat .spark i { flex: 1; background: var(--surface-2); border-radius: 3px; }
   .stat .spark i.on { background: linear-gradient(180deg, var(--teal), var(--teal-deep)); }
   .stat .ring { position: absolute; top: 16px; right: 16px; }
 
-  .section-h { display: flex; align-items: center; justify-content: space-between; margin: 30px 2px 14px; }
+  .section-h { display: flex; align-items: center; justify-content: space-between; margin: 18px 2px 14px; }
   .section-h h2 { font-size: 18px; font-weight: 600; letter-spacing: -0.02em; }
   .section-h a { color: var(--teal); font-size: 13px; font-weight: 600; text-decoration: none; cursor: pointer; }
 
@@ -191,14 +191,14 @@
     display: block; width: 100%; height: 100%; object-fit: cover; border-radius: inherit;
   }
   .workout-row .row-body { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
-  .workout-row .row-title { font-size: 14.5px; font-weight: 700; letter-spacing: -0.01em; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .workout-row .row-sub { color: var(--text-dim); font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .workout-row .row-title { font-size: 14.5px; font-weight: 700; letter-spacing: -0.01em; color: var(--text); }
+  .workout-row .row-sub { color: var(--text-dim); font-size: 12.5px; margin-top: 2px; }
   .workout-row .x {
     width: 28px; height: 28px; border: 0; background: transparent; cursor: pointer;
     color: var(--text-faint); border-radius: 8px; display: grid; place-items: center; transition: .15s;
     align-self: start;
   }
-  .workout-row .x:hover { background: var(--surface-3); color: var(--text); }
+  .workout-row .x:hover { background: rgba(226,75,74,0.12); color: #d8483f; }
   .workout-row .x svg { width: 14px; height: 14px; }
 
   .modal-backdrop {
@@ -239,7 +239,7 @@
   .modal-card .w-row .w-log { background: linear-gradient(135deg, var(--teal), var(--teal-deep)); color: #fff; border: 0; box-shadow: 0 6px 16px var(--teal-glow); }
   .modal-card .w-row .w-log:hover { filter: brightness(1.05); transform: translateY(-1px); box-shadow: 0 10px 22px var(--teal-glow); }
 
-  .actions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; max-width: 720px; }
+  .actions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; max-width: 648px; margin-bottom: 5px; }
   .action {
     display: flex; align-items: center; justify-content: center; gap: 10px;
     background: linear-gradient(135deg, var(--teal), var(--teal-deep)); border: 0; border-radius: 12px;
@@ -252,6 +252,10 @@
   .action .qa-ic svg { width: 17px; height: 17px; }
   .action .qa-label { letter-spacing: -0.01em; }
 
+  .cols2 { display: grid; grid-template-columns: 1fr 1fr; gap: 26px; align-items: start; }
+  .cols2 .col { min-width: 0; }
+  .cols2 .section-h { margin-top: 8px; }
+
   .logs { display: flex; flex-direction: column; gap: 8px; }
   .log {
     display: flex; align-items: center; gap: 14px; padding: 14px 16px;
@@ -262,6 +266,16 @@
   .log .name { font-weight: 600; font-size: 14px; }
   .log .sub { color: var(--text-dim); font-size: 13px; margin-top: 2px; }
   .log .when { margin-left: auto; color: var(--text-faint); font-size: 13px; }
+  .log-del { margin-left: 6px; flex-shrink: 0; width: 28px; height: 28px; border: 0; background: transparent; color: var(--text-faint); border-radius: 8px; cursor: pointer; display: grid; place-items: center; opacity: 0.45; transition: .15s; }
+  .log:hover .log-del { opacity: 1; }
+  .log-del:hover { background: rgba(226,75,74,0.12); color: #d8483f; }
+  .log-del svg { width: 15px; height: 15px; }
+
+  .pager { display: flex; align-items: center; justify-content: center; gap: 12px; padding: 12px 0 2px; }
+  .pg-btn { width: 30px; height: 30px; border: 1px solid var(--line-2); background: var(--surface); color: var(--text); border-radius: 8px; cursor: pointer; font-size: 17px; line-height: 1; display: grid; place-items: center; transition: .15s; }
+  .pg-btn:hover:not(:disabled) { border-color: var(--teal-deep); color: var(--teal-deep); }
+  .pg-btn:disabled { opacity: 0.4; cursor: default; }
+  .pg-info { font-size: 13px; color: var(--text-dim); font-weight: 600; font-variant-numeric: tabular-nums; }
   .log.empty { color: var(--text-dim); border-style: dashed; }
   .log.empty .name { font-weight: 500; }
 
@@ -315,7 +329,7 @@
   .injury-chip .x:hover { color: #2a3650; }
   .injury-add { cursor: pointer; font-size: 12px; padding: 3px 9px; border-radius: 999px; background: transparent; border: 1px dashed rgba(120,145,185,0.45); color: #2a3650; }
   .injury-add:hover { background: rgba(120,145,185,0.08); }
-  .injury-menu { position: absolute; top: 32px; right: 18px; background: #fff; border: 1px solid rgba(120,145,185,0.30); border-radius: 8px; box-shadow: 0 6px 24px rgba(0,0,0,0.08); padding: 4px; z-index: 10; min-width: 140px; }
+  .injury-menu { position: absolute; bottom: 34px; right: 18px; background: #fff; border: 1px solid rgba(120,145,185,0.30); border-radius: 8px; box-shadow: 0 -6px 24px rgba(0,0,0,0.10); padding: 4px; z-index: 10; min-width: 140px; max-height: 240px; overflow-y: auto; }
   .injury-menu button { display: block; width: 100%; text-align: left; padding: 6px 10px; border: none; background: transparent; font-size: 13px; color: #2a3650; cursor: pointer; border-radius: 4px; }
   .injury-menu button:hover { background: rgba(120,145,185,0.10); }
   .injury-menu button:disabled { color: #aaa; cursor: default; }
@@ -412,6 +426,8 @@
     .actions { max-width: none; grid-template-columns: repeat(3, 1fr); }
     .action { padding: 11px 8px; font-size: 13px; }
 
+    .cols2 { grid-template-columns: 1fr; gap: 0; }
+
     .chat { display: none; width: 100%; height: calc(100vh - 62px); border-left: 0; }
     body.view-chat .main { display: none; }
     body.view-chat .chat { display: flex; }
@@ -474,23 +490,6 @@
       </div>
     </div>
 
-    <div class="section-h"><h2>My workouts</h2><a onclick="askGenerate()">+ New ↗</a></div>
-    <div id="workouts">
-      <div class="plan">
-        <div class="thumb"><img class="photo" alt="" src="/static/press.jpg"
-          onerror="imgChain(this,'https://images.pexels.com/photos/4720236/pexels-photo-4720236.jpeg?auto=compress&cs=tinysrgb&w=600')" /></div>
-        <div class="body">
-          <div class="tag">Upper body · dumbbell</div>
-          <h3>30-min push focus</h3>
-          <div class="meta">4 exercises · warmup + main + cooldown · ~310 kcal</div>
-          <div class="row">
-            <button class="btn btn-primary" onclick="ask('Start my 30-minute upper body workout')"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M8 5v14l11-7z"/></svg> Start session</button>
-            <button class="btn btn-ghost" onclick="ask('Show me the full exercise list for today')">View exercises</button>
-          </div>
-        </div>
-      </div>
-    </div>
-
     <div class="section-h"><h2>Quick actions</h2></div>
     <div class="actions">
       <button class="action" onclick="ask('What muscles does a Romanian deadlift work?')">
@@ -507,9 +506,32 @@
       </button>
     </div>
 
-    <div class="section-h"><h2>Recent logs</h2><a id="logs-toggle" onclick="toggleLogs()" style="display:none">View all ↗</a></div>
-    <div class="logs" id="logs">
-      <div class="log empty"><div><div class="name">No logs yet this session</div><div class="sub">Tell the chat what you just did — Spotter will match it and add it here.</div></div></div>
+    <div class="cols2">
+      <div class="col">
+        <div class="section-h"><h2>My workouts</h2><a onclick="askGenerate()">+ New ↗</a></div>
+        <div id="workouts">
+          <div class="plan">
+            <div class="thumb"><img class="photo" alt="" src="/static/press.jpg"
+              onerror="imgChain(this,'https://images.pexels.com/photos/4720236/pexels-photo-4720236.jpeg?auto=compress&cs=tinysrgb&w=600')" /></div>
+            <div class="body">
+              <div class="tag">Upper body · dumbbell</div>
+              <h3>30-min push focus</h3>
+              <div class="meta">4 exercises · warmup + main + cooldown · ~310 kcal</div>
+              <div class="row">
+                <button class="btn btn-primary" onclick="ask('Start my 30-minute upper body workout')"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M8 5v14l11-7z"/></svg> Start session</button>
+                <button class="btn btn-ghost" onclick="ask('Show me the full exercise list for today')">View exercises</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col">
+        <div class="section-h"><h2>Recent logs</h2><a id="logs-toggle" onclick="toggleLogs()" style="display:none">View all ↗</a></div>
+        <div class="logs" id="logs">
+          <div class="log empty"><div><div class="name">No logs yet this session</div><div class="sub">Tell the chat what you just did — Spotter will match it and add it here.</div></div></div>
+        </div>
+      </div>
     </div>
   </main>
 
@@ -713,10 +735,9 @@
       items.forEach(it => {
         const nm = esc(it.exercise_name || 'Exercise')
           + (it.side_note ? ` <span class="wc-side">(${esc(it.side_note)})</span>` : '');
-        const swap = escAttr(`Swap ${it.exercise_name || 'this exercise'} for a different exercise`);
         body += `<div class="wc-ex"><div><div class="wc-exname">${nm}</div>`
           + `<div class="wc-presc">${esc(prescOf(it))}</div></div>`
-          + `<button class="wc-swap" data-ask="${swap}">swap</button></div>`;
+          + `<button class="wc-swap" type="button" title="Coming soon">swap</button></div>`;
       });
       body += `</div></div>`;
     });
@@ -865,8 +886,19 @@
 
   // --- Recent logs (session-scoped, sessionStorage) ---------------------------
   const LOG_KEY = 'spotter.recentLogs';
-  const COLLAPSED_LIMIT = 5;
-  let logsExpanded = false;
+  const LOGS_PER_PAGE = 5;
+  let logsPage = 0;
+
+  // Shared pagination control markup (wired by each renderer).
+  function pagerHtml(total, page, perPage){
+    const pages = Math.ceil(total / perPage);
+    if (pages <= 1) return '';
+    return `<div class="pager">`
+      + `<button class="pg-btn" data-pg="prev"${page <= 0 ? ' disabled' : ''} aria-label="Previous page">‹</button>`
+      + `<span class="pg-info">${page + 1} of ${pages}</span>`
+      + `<button class="pg-btn" data-pg="next"${page >= pages - 1 ? ' disabled' : ''} aria-label="Next page">›</button>`
+      + `</div>`;
+  }
 
   function loadLogs(){
     try { return JSON.parse(sessionStorage.getItem(LOG_KEY) || '[]'); }
@@ -878,6 +910,11 @@
     const items = loadLogs();
     items.unshift({ ...entry, logged_at: new Date().toISOString() });
     saveLogs(items.slice(0, 50));
+    logsPage = 0;
+    renderLogs();
+  }
+  function deleteLog(loggedAt){
+    saveLogs(loadLogs().filter(e => e.logged_at !== loggedAt));
     renderLogs();
   }
 
@@ -896,32 +933,41 @@
   function renderLogs(){
     const wrap = document.getElementById('logs');
     const toggle = document.getElementById('logs-toggle');
+    if (toggle) toggle.style.display = 'none';
     const items = loadLogs();
     if (!items.length){
       wrap.innerHTML = `<div class="log empty"><div><div class="name">No logs yet this session</div><div class="sub">Tell the chat what you just did — Spotter will match it and add it here.</div></div></div>`;
-      toggle.style.display = 'none';
       return;
     }
-    const shown = logsExpanded ? items : items.slice(0, COLLAPSED_LIMIT);
+    const pages = Math.max(1, Math.ceil(items.length / LOGS_PER_PAGE));
+    logsPage = Math.min(Math.max(logsPage, 0), pages - 1);
+    const start = logsPage * LOGS_PER_PAGE;
+    const shown = items.slice(start, start + LOGS_PER_PAGE);
     const check = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>`;
+    const trash = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 11v6M14 11v6"/></svg>`;
     wrap.innerHTML = shown.map(e =>
       `<div class="log"><div class="dot">${check}</div>` +
       `<div><div class="name">${esc(e.exercise_name || 'Exercise')}</div>` +
       `<div class="sub">${esc(fmtPrescription(e))}</div></div>` +
-      `<div class="when">${esc(fmtWhen(e.logged_at))}</div></div>`
-    ).join('');
-    if (items.length > COLLAPSED_LIMIT){
-      toggle.style.display = '';
-      toggle.textContent = logsExpanded ? 'Show fewer ↗' : `View all (${items.length}) ↗`;
-    } else {
-      toggle.style.display = 'none';
-    }
+      `<div class="when">${esc(fmtWhen(e.logged_at))}</div>` +
+      `<button class="log-del" data-del="${esc(e.logged_at)}" aria-label="Delete log" title="Delete">${trash}</button></div>`
+    ).join('') + pagerHtml(items.length, logsPage, LOGS_PER_PAGE);
+    wrap.querySelectorAll('[data-del]').forEach(b =>
+      b.addEventListener('click', (ev) => { ev.stopPropagation(); deleteLog(b.getAttribute('data-del')); }));
+    wrap.querySelectorAll('[data-pg]').forEach(b =>
+      b.addEventListener('click', () => {
+        if (b.hasAttribute('disabled')) return;
+        logsPage += b.getAttribute('data-pg') === 'next' ? 1 : -1;
+        renderLogs();
+      }));
   }
-  function toggleLogs(){ logsExpanded = !logsExpanded; renderLogs(); }
+  function toggleLogs(){ /* replaced by pagination */ }
 
   // --- Saved workouts (session-scoped, sessionStorage) -----------------------
   const WORKOUT_KEY = 'spotter.savedWorkouts';
   const MAX_SAVED_WORKOUTS = 20;
+  const WORKOUTS_PER_PAGE = 4;
+  let workoutsPage = 0;
 
   const STUB_WORKOUT_HTML = `<div class="plan">
     <div class="thumb"><img class="photo" alt="" src="/static/press.jpg"
@@ -953,6 +999,7 @@
     const items = loadWorkouts();
     items.unshift({ id: newWorkoutId(), saved_at: new Date().toISOString(), workout: w });
     saveWorkouts(items.slice(0, MAX_SAVED_WORKOUTS));
+    workoutsPage = 0;
     renderWorkouts();
   }
 
@@ -972,10 +1019,9 @@
       items.forEach(ex => {
         const nm = esc(ex.exercise_name || 'Exercise')
           + (ex.side_note ? ` <span class="w-side">(${esc(ex.side_note)})</span>` : '');
-        const swap = escAttr(`Swap ${ex.exercise_name || 'this exercise'} for a different exercise`);
         body += `<div class="w-ex">`
           + `<div><div class="w-name">${nm}</div><div class="w-pres">${esc(prescOf(ex))}</div></div>`
-          + `<button class="wc-swap" data-modal-swap="${swap}">swap</button>`
+          + `<button class="wc-swap" type="button" title="Coming soon">swap</button>`
           + `</div>`;
       });
       body += `</div>`;
@@ -995,7 +1041,7 @@
     const bgAttr = escAttr(cat.bg);
     const imgAttr = escAttr(cat.img);
     const fbAttr = escAttr(CATEGORY_FALLBACK_URL);
-    const removeIcon = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6 18 18M18 6 6 18"/></svg>`;
+    const removeIcon = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 11v6M14 11v6"/></svg>`;
     return `<div class="workout-row" data-open="${escAttr(it.id)}">`
       + `<div class="row-thumb" style="background: ${bgAttr}">`
       +   `<img class="row-thumb-img" alt="" src="${imgAttr}" onerror="imgChain(this,'${fbAttr}')" />`
@@ -1080,7 +1126,12 @@
       return;
     }
     wrap.className = 'workouts';
-    wrap.innerHTML = items.map(renderSavedWorkoutRow).join('');
+    const pages = Math.max(1, Math.ceil(items.length / WORKOUTS_PER_PAGE));
+    workoutsPage = Math.min(Math.max(workoutsPage, 0), pages - 1);
+    const start = workoutsPage * WORKOUTS_PER_PAGE;
+    const shown = items.slice(start, start + WORKOUTS_PER_PAGE);
+    wrap.innerHTML = shown.map(renderSavedWorkoutRow).join('')
+      + pagerHtml(items.length, workoutsPage, WORKOUTS_PER_PAGE);
     wrap.querySelectorAll('[data-remove]').forEach(b =>
       b.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -1088,6 +1139,13 @@
       }));
     wrap.querySelectorAll('[data-open]').forEach(row =>
       row.addEventListener('click', () => openWorkoutModal(row.getAttribute('data-open'))));
+    wrap.querySelectorAll('[data-pg]').forEach(b =>
+      b.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (b.hasAttribute('disabled')) return;
+        workoutsPage += b.getAttribute('data-pg') === 'next' ? 1 : -1;
+        renderWorkouts();
+      }));
   }
 
   // --- Injuries to avoid (session-scoped, sessionStorage) --------------------
