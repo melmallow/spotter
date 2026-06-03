@@ -239,6 +239,19 @@
   .chip svg { width: 14px; height: 14px; color: var(--teal-deep); }
   .chip:hover { border-color: var(--teal-deep); color: var(--text); background: var(--surface-2); }
 
+  .injuries { padding: 8px 18px 0; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; position: relative; }
+  .injuries .label { color: #5d6b7e; font-size: 12px; margin-right: 4px; }
+  .injuries .empty { color: #5d6b7e; font-size: 12px; cursor: pointer; padding: 4px 8px; border-radius: 999px; }
+  .injuries .empty:hover { background: rgba(120,145,185,0.10); }
+  .injury-chip { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; padding: 3px 6px 3px 9px; border-radius: 999px; background: rgba(120,145,185,0.12); color: #2a3650; }
+  .injury-chip .x { cursor: pointer; padding: 0 4px; border: none; background: transparent; color: #5d6b7e; font-size: 14px; line-height: 1; }
+  .injury-chip .x:hover { color: #2a3650; }
+  .injury-add { cursor: pointer; font-size: 12px; padding: 3px 9px; border-radius: 999px; background: transparent; border: 1px dashed rgba(120,145,185,0.45); color: #2a3650; }
+  .injury-add:hover { background: rgba(120,145,185,0.08); }
+  .injury-menu { position: absolute; top: 32px; right: 18px; background: #fff; border: 1px solid rgba(120,145,185,0.30); border-radius: 8px; box-shadow: 0 6px 24px rgba(0,0,0,0.08); padding: 4px; z-index: 10; min-width: 140px; }
+  .injury-menu button { display: block; width: 100%; text-align: left; padding: 6px 10px; border: none; background: transparent; font-size: 13px; color: #2a3650; cursor: pointer; border-radius: 4px; }
+  .injury-menu button:hover { background: rgba(120,145,185,0.10); }
+  .injury-menu button:disabled { color: #aaa; cursor: default; }
   .composer { padding: 14px 18px 20px; border-top: 1px solid rgba(120,145,185,0.20); }
   .composer .field {
     display: flex; align-items: center; gap: 8px; background: #C3D2E8;
@@ -435,6 +448,7 @@
       <button class="chip" onclick="askGenerate()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m12 3 2.5 5.5L20 9l-4 4 1 6-5-3-5 3 1-6-4-4 5.5-.5z"/></svg>Generate</button>
       <button class="chip" onclick="askLog()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg>Log</button>
     </div>
+    <div class="injuries" id="injuries"></div>
     <div class="composer">
       <form class="field" id="form" onsubmit="return submitMsg(event)">
         <input id="input" autocomplete="off" placeholder="Ask, generate, or log…" />
@@ -479,6 +493,21 @@
 
   document.getElementById('date').textContent =
     new Date().toLocaleDateString(undefined, { weekday:'long', month:'long', day:'numeric' });
+
+  // Canonical joint values come from exercises.json `joints_loaded` field.
+  // Labels are lowercase plain-English. Strip stores values; UI shows labels.
+  const JOINTS = [
+    { value: "shoulder",       label: "shoulder" },
+    { value: "hip",            label: "hip" },
+    { value: "knee",           label: "knee" },
+    { value: "ankle",          label: "ankle" },
+    { value: "elbow",          label: "elbow" },
+    { value: "wrist",          label: "wrist" },
+    { value: "cervical spine", label: "neck" },
+    { value: "thoracic spine", label: "upper back" },
+    { value: "lumbar spine",   label: "lower back" },
+  ];
+  const INJURY_KEY = 'spotter.avoidJoints';
 
   const ROUTES = {
     COACH:           { label:'Coach',   icon:'M12 21s-7-4.35-9.5-9A5 5 0 0 1 12 6a5 5 0 0 1 9.5 6c-2.5 4.65-9.5 9-9.5 9z' },
@@ -592,8 +621,7 @@
     let html = '';
     if (route && ROUTES[route]) {
       const r = ROUTES[route];
-      const c = conf != null ? `<span class="conf">${Math.round(conf*100)}%</span>` : '';
-      html += `<div class="route"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="${r.icon}"/></svg>${r.label} ${c}</div>`;
+      html += `<div class="route"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="${r.icon}"/></svg>${r.label}</div>`;
     }
     if (text && text.trim()) html += `<div class="bubble">${fmt(text)}</div>`;
     if (workout) html += renderWorkoutCard(workout);
@@ -820,8 +848,88 @@
       b.addEventListener('click', () => removeWorkout(b.getAttribute('data-remove'))));
   }
 
+  // --- Injuries to avoid (session-scoped, sessionStorage) --------------------
+  let _injuryMenuOpen = false;
+
+  function loadInjuries(){
+    try {
+      const raw = JSON.parse(sessionStorage.getItem(INJURY_KEY) || '[]');
+      const valid = new Set(JOINTS.map(j => j.value));
+      const seen = new Set();
+      return raw.filter(v => valid.has(v) && !seen.has(v) && seen.add(v));
+    } catch { return []; }
+  }
+  function saveInjuries(arr){
+    try { sessionStorage.setItem(INJURY_KEY, JSON.stringify(arr)); }
+    catch { /* quota / disabled — fall through to in-memory only */ }
+  }
+  function displayLabel(value){
+    const j = JOINTS.find(j => j.value === value);
+    return j ? j.label : value;
+  }
+  function toggleInjury(value){
+    const current = loadInjuries();
+    const idx = current.indexOf(value);
+    if (idx === -1) current.push(value);
+    else current.splice(idx, 1);
+    saveInjuries(current);
+    renderInjuries();
+  }
+  function openInjuryMenu(){
+    closeInjuryMenu();
+    const host = document.getElementById('injuries');
+    const taken = new Set(loadInjuries());
+    const menu = document.createElement('div');
+    menu.className = 'injury-menu';
+    menu.id = 'injury-menu';
+    menu.innerHTML = JOINTS.map(j => {
+      const dis = taken.has(j.value) ? ' disabled' : '';
+      return `<button type="button" data-add="${escAttr(j.value)}"${dis}>${esc(j.label)}</button>`;
+    }).join('');
+    menu.addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-add]');
+      if (!btn || btn.disabled) return;
+      toggleInjury(btn.getAttribute('data-add'));
+      closeInjuryMenu();
+    });
+    host.appendChild(menu);
+    _injuryMenuOpen = true;
+    // Document-level outside-click: defer until next tick so the opening click
+    // itself doesn't close the menu we just opened.
+    setTimeout(() => document.addEventListener('click', _injuryOutsideClick), 0);
+  }
+  function closeInjuryMenu(){
+    const m = document.getElementById('injury-menu');
+    if (m) m.remove();
+    _injuryMenuOpen = false;
+    document.removeEventListener('click', _injuryOutsideClick);
+  }
+  function _injuryOutsideClick(e){
+    if (e.target.closest('#injury-menu')) return;
+    if (e.target.closest('.injury-add')) return;
+    closeInjuryMenu();
+  }
+  function renderInjuries(){
+    const host = document.getElementById('injuries');
+    if (!host) return;
+    const current = loadInjuries();
+    if (current.length === 0) {
+      host.innerHTML = `<span class="empty" onclick="openInjuryMenu()">+ Add injuries to avoid</span>`;
+      return;
+    }
+    const chips = current.map(v =>
+      `<span class="injury-chip">${esc(displayLabel(v))}`
+      + `<button class="x" type="button" data-remove="${escAttr(v)}" aria-label="remove">×</button>`
+      + `</span>`).join('');
+    host.innerHTML = `<span class="label">Injuries to avoid:</span>${chips}`
+      + `<button class="injury-add" type="button" onclick="openInjuryMenu()">+ add</button>`;
+    host.querySelectorAll('[data-remove]').forEach(b =>
+      b.addEventListener('click', () => toggleInjury(b.getAttribute('data-remove'))));
+  }
+
   renderLogs();
   renderWorkouts();
+  renderInjuries();
   addBot("Hey — I'm Spotter. Ask what muscles a deadlift works, have me build a 30-minute upper-body session, or just tell me a set you finished and I'll log it.");
 </script>
 </body>
