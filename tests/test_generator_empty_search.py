@@ -8,7 +8,7 @@ from __future__ import annotations
 import json
 
 import pytest
-from langchain_core.messages import AIMessage, ToolMessage
+from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
 
 from spotter.agents.generator import build_generator_subgraph
 from spotter.data import get_dataset
@@ -67,7 +67,7 @@ def test_empty_search_recovery_no_hallucination(fake_chat_model_factory):
     )
 
     graph = build_generator_subgraph(model=fake)
-    out = graph.invoke({"user_input": "Build me a workout using a rowing machine"})
+    out = graph.invoke({"messages": [HumanMessage(content="Build me a workout using a rowing machine")]})
 
     # Final response surfaces the unavailability honestly
     assert "rowing" in out["final_response"].lower()
@@ -85,8 +85,12 @@ def test_empty_search_recovery_no_hallucination(fake_chat_model_factory):
                         f"Hallucinated exercise ID in response: {chunk}"
                     )
 
-    # The tool response should be the empty result with a reason
-    tool_messages = [m for m in out["messages"] if isinstance(m, ToolMessage)]
+    # The tool response should be the empty result with a reason.
+    # Tool messages live in generator_scratch (the per-turn working list),
+    # NOT in the shared conversation transcript.
+    tool_messages = [
+        m for m in out["generator_scratch"] if isinstance(m, ToolMessage)
+    ]
     assert tool_messages, "Generator must have invoked at least one tool"
     payload = json.loads(tool_messages[0].content)
     assert payload["exercises"] == []
