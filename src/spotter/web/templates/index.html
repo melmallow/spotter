@@ -316,9 +316,9 @@
   .gen-injuries .row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
   .gen-injuries .pill { font-size: 12px; padding: 4px 10px; border-radius: 999px; border: 1px solid rgba(120,145,185,0.35); background: transparent; color: #2a3650; cursor: pointer; }
   .gen-injuries .pill.on { background: rgba(0,170,170,0.12); border-color: var(--teal-deep); color: var(--teal-deep); }
-  .gen-injuries .actions { display: flex; gap: 6px; justify-content: flex-end; }
-  .gen-injuries .actions button { font-size: 13px; padding: 6px 14px; border-radius: 999px; cursor: pointer; border: 1px solid rgba(120,145,185,0.35); background: transparent; color: #2a3650; }
-  .gen-injuries .actions .next { background: var(--teal-deep); border-color: var(--teal-deep); color: #fff; }
+  .gen-injuries .gen-actions { display: flex; gap: 6px; justify-content: flex-end; }
+  .gen-injuries .gen-actions button { font-size: 13px; padding: 6px 14px; border-radius: 999px; cursor: pointer; border: 1px solid rgba(120,145,185,0.35); background: transparent; color: #2a3650; }
+  .gen-injuries .gen-actions .next { background: var(--teal-deep); border-color: var(--teal-deep); color: #fff; }
   .composer { padding: 14px 18px 20px; border-top: 1px solid rgba(120,145,185,0.20); }
   .composer .field {
     display: flex; align-items: center; gap: 8px; background: #C3D2E8;
@@ -751,7 +751,7 @@
     el.innerHTML = `<div class="bubble">Any injuries to avoid for this workout?</div>`
       + `<div class="gen-injuries">`
       + `<div class="row">${rowHtml}</div>`
-      + `<div class="actions">`
+      + `<div class="gen-actions">`
       + `<button type="button" class="skip">Skip</button>`
       + `<button type="button" class="next">Next</button>`
       + `</div></div>`;
