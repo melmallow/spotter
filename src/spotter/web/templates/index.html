@@ -621,7 +621,8 @@
     let html = '';
     if (route && ROUTES[route]) {
       const r = ROUTES[route];
-      html += `<div class="route"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="${r.icon}"/></svg>${r.label}</div>`;
+      const c = conf != null ? `<span class="conf">${Math.round(conf*100)}%</span>` : '';
+      html += `<div class="route"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="${r.icon}"/></svg>${r.label} ${c}</div>`;
     }
     if (text && text.trim()) html += `<div class="bubble">${fmt(text)}</div>`;
     if (workout) html += renderWorkoutCard(workout);
