@@ -94,3 +94,22 @@ def fake_chat_model_factory():
         )
 
     return _build
+
+
+@pytest.fixture
+def multiturn_hub():
+    """Build a hub with an explicit MemorySaver for multi-turn tests.
+
+    Usage:
+        hub = multiturn_hub(router_model=..., logger_model=..., ...)
+        out1 = run_hub(hub, "first message", conversation_id="conv-1")
+        out2 = run_hub(hub, "follow-up", conversation_id="conv-1")
+    """
+    from langgraph.checkpoint.memory import MemorySaver
+
+    from spotter.hub import build_hub
+
+    def _build(**model_kwargs):
+        return build_hub(checkpointer=MemorySaver(), **model_kwargs)
+
+    return _build
