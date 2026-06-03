@@ -8,7 +8,7 @@ the pool is pre-filtered to exercises whose name contains 'row' first.
 from __future__ import annotations
 
 import pytest
-from langchain_core.messages import AIMessage
+from langchain_core.messages import AIMessage, HumanMessage
 
 from spotter.agents.logger import build_logger_subgraph
 from spotter.logging_setup import (
@@ -44,7 +44,7 @@ def test_movement_keyword_biases_match_toward_row_family(fake_chat_model_factory
         ]
     )
     graph = build_logger_subgraph(model=fake)
-    out = graph.invoke({"user_input": "Did 4x8 dumbbell rows at 50 lbs"})
+    out = graph.invoke({"messages": [HumanMessage(content="Did 4x8 dumbbell rows at 50 lbs")]})
 
     canonical = (out["sub_agent_output"].get("canonical_name") or "").lower()
     response = out["final_response"].lower()
@@ -72,7 +72,7 @@ def test_no_keyword_falls_back_to_full_dataset(fake_chat_model_factory):
         ]
     )
     graph = build_logger_subgraph(model=fake)
-    out = graph.invoke({"user_input": "3x10 bench press at 185"})
+    out = graph.invoke({"messages": [HumanMessage(content="3x10 bench press at 185")]})
 
     canonical = (out["sub_agent_output"].get("canonical_name") or "").lower()
     assert "bench press" in canonical
@@ -91,6 +91,6 @@ def test_empty_bias_pool_falls_back_safely(fake_chat_model_factory):
         ]
     )
     graph = build_logger_subgraph(model=fake)
-    out = graph.invoke({"user_input": "anything"})
+    out = graph.invoke({"messages": [HumanMessage(content="anything")]})
     # No exception, response produced
     assert "final_response" in out

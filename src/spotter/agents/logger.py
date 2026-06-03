@@ -6,11 +6,13 @@ import time
 from typing import Any
 
 from langchain_core.language_models.chat_models import BaseChatModel
+from langchain_core.messages import AIMessage, SystemMessage
 from langgraph.graph import END, START, StateGraph
 from pydantic import ValidationError
 from rapidfuzz import fuzz, process, utils
 
-from spotter.config import FUZZY_MATCH_THRESHOLD
+from spotter.config import FUZZY_MATCH_THRESHOLD, MAX_HISTORY_TURNS
+from spotter.conversations import trim_history
 from spotter.data import Dataset, get_dataset
 from spotter.llm import chat_model
 from spotter.logging_setup import get_logger
@@ -20,28 +22,51 @@ from spotter.schemas import HubState, LogEntry
 log = get_logger("logger")
 
 
-LOGGER_SYSTEM_PROMPT = """Extract a structured workout log entry from the user's message.
+LOGGER_SYSTEM_PROMPT = """Extract a structured workout log entry from the conversation.
 
-Return the exercise name verbatim as the user said it (e.g. "bench press", not a canonical form),
-the number of sets, reps per set, and any weight + unit. If weight wasn't mentioned, omit it.
+You receive the full recent conversation history. The user's most recent message is
+the new input. Earlier messages may include:
+- Prior log requests (e.g., "I did 3x10 bicep curls").
+- An assistant disambiguation question listing 2–3 candidate exercise names
+  ("I couldn't confidently match X. Did you mean Y, Z, or W?").
 
-ALSO populate `movement_keyword` with a single short keyword identifying the kind of movement —
-this biases the fuzzy match toward the right exercise family. See the schema description for
-the allowed values. Examples: 'I did rows' → 'row'; 'bench press' → 'press'; 'RDLs' → 'deadlift';
-'preacher curls' → 'curl'. Pick the dominant keyword; leave as None only if no clear one applies.
+If the most recent user message looks like a reply to a disambiguation question
+(it picks one of the candidates, possibly with a typo or short prefix), MERGE
+sets/reps/weight from the earlier log request with the exercise the user just
+named. Return the merged LogEntry, using the user's chosen exercise as
+`exercise_name_raw`.
 
-If the input is not a workout log (e.g. a question), still attempt extraction — downstream
-will reject low-confidence matches."""
+Otherwise, extract from the most recent user message directly (verbatim exercise
+name, sets, reps, weight + unit if mentioned).
+
+ALSO populate `movement_keyword` with a single short keyword identifying the kind of
+movement — see the schema description for allowed values. Examples: 'I did rows'
+→ 'row'; 'bench press' → 'press'; 'RDLs' → 'deadlift'; 'preacher curls' → 'curl'.
+
+If the input is not a workout log (e.g. a question), still attempt extraction —
+downstream will reject low-confidence matches."""
 
 
 def _extract(state: HubState, *, model: BaseChatModel) -> dict[str, Any]:
+    messages = state.get("messages") or []
+    if not messages:
+        text = (
+            "I couldn't parse that as a workout log. Try something like "
+            "'3x10 bench press at 185 lbs'."
+        )
+        return {
+            "sub_agent_output": {"resolved": False, "error": "no messages"},
+            "final_response": text,
+            "messages": [AIMessage(content=text)],
+        }
+    trimmed = trim_history(messages, MAX_HISTORY_TURNS)
     structured = model.with_structured_output(LogEntry)
     started = time.perf_counter()
     try:
         entry: LogEntry = structured.invoke(
             [
-                ("system", LOGGER_SYSTEM_PROMPT),
-                ("human", state["user_input"]),
+                SystemMessage(content=LOGGER_SYSTEM_PROMPT),
+                *trimmed,
             ]
         )
     except (ValidationError, Exception) as exc:
@@ -51,15 +76,17 @@ def _extract(state: HubState, *, model: BaseChatModel) -> dict[str, Any]:
             error_class=type(exc).__name__,
             latency_ms=int((time.perf_counter() - started) * 1000),
         )
+        text = (
+            "I couldn't parse that as a workout log. Try something like "
+            "'3x10 bench press at 185 lbs'."
+        )
         return {
             "sub_agent_output": {
                 "resolved": False,
                 "error": f"Couldn't parse the log: {type(exc).__name__}",
             },
-            "final_response": (
-                "I couldn't parse that as a workout log. Try something like "
-                "'3x10 bench press at 185 lbs'."
-            ),
+            "final_response": text,
+            "messages": [AIMessage(content=text)],
         }
 
     log.info(
@@ -81,11 +108,6 @@ def _match(state: HubState, *, dataset: Dataset) -> dict[str, Any]:
     raw_name = entry_dict["exercise_name_raw"]
     keyword = (entry_dict.get("movement_keyword") or "").strip().lower()
 
-    # When the LLM gave us a movement keyword, prefer candidates whose name
-    # contains the keyword. This stops WRatio over-weighting an equipment token
-    # like 'Dumbbell' and steering 'dumbbell rows' to 'Alternating Dumbbell
-    # Decline Bench Press'. If the keyword pool is empty (the LLM picked a word
-    # the dataset doesn't use), fall back to the full dataset.
     if keyword:
         biased_pool = [e for e in dataset.all if keyword in e.name.lower()]
         pool = biased_pool if biased_pool else list(dataset.all)
@@ -93,9 +115,6 @@ def _match(state: HubState, *, dataset: Dataset) -> dict[str, Any]:
         pool = list(dataset.all)
 
     candidate_names = [e.name for e in pool]
-    # WRatio combines partial/token_set/token_sort strategies, which is what we
-    # want: "bench press" should match "Barbell Flat Bench Press" highly because
-    # the user's name is a partial substring of the canonical name.
     matches = process.extract(
         raw_name,
         candidate_names,
@@ -131,6 +150,7 @@ def _match(state: HubState, *, dataset: Dataset) -> dict[str, Any]:
                 "match_score": top_score,
             },
             "final_response": response,
+            "messages": [AIMessage(content=response)],
         }
 
     candidate_list = [
@@ -156,6 +176,7 @@ def _match(state: HubState, *, dataset: Dataset) -> dict[str, Any]:
             "log_entry": entry_dict,
         },
         "final_response": response,
+        "messages": [AIMessage(content=response)],
     }
 
 
