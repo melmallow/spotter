@@ -741,9 +741,15 @@
         else { transient.add(v); b.classList.add('on'); b.textContent = '✓ ' + displayLabel(v); }
       });
     });
-    const fire = () => proceedGenerate(muscle, Array.from(transient));
-    el.querySelector('.skip').addEventListener('click', fire);
-    el.querySelector('.next').addEventListener('click', fire);
+    const skipBtn = el.querySelector('.skip');
+    const nextBtn = el.querySelector('.next');
+    const fire = () => {
+      skipBtn.disabled = true;
+      nextBtn.disabled = true;
+      proceedGenerate(muscle, Array.from(transient));
+    };
+    skipBtn.addEventListener('click', fire);
+    nextBtn.addEventListener('click', fire);
     log.appendChild(el); scroll();
   }
 
