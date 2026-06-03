@@ -9,9 +9,8 @@ from pathlib import Path
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel, Field
-
 from langgraph.checkpoint.memory import MemorySaver
+from pydantic import BaseModel, Field
 
 from spotter.hub import build_hub, run_hub
 from spotter.logging_setup import (

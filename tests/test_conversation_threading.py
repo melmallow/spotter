@@ -32,6 +32,14 @@ def test_same_conversation_id_shares_messages(fake_chat_model_factory):
     assert out1["response"] == "first reply"
     assert out2["response"] == "second reply"
 
+    # Verify the checkpointer actually persisted both turns under the same thread.
+    state = hub.get_state({"configurable": {"thread_id": "conv-A"}}).values
+    msgs = state.get("messages", [])
+    human_msgs = [m for m in msgs if isinstance(m, HumanMessage)]
+    assert len(human_msgs) == 2
+    assert human_msgs[0].content == "what muscles does a deadlift work?"
+    assert human_msgs[1].content == "how about the conventional one?"
+
 
 def test_different_conversation_ids_are_isolated(fake_chat_model_factory):
     router_model = fake_chat_model_factory(
