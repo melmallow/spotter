@@ -742,7 +742,7 @@
 
   async function send(text, jointsOverride){
     const joints = jointsOverride !== undefined ? jointsOverride : loadInjuries();
-    addUser(text); input.value = ''; renderInjuriesLine(joints); addTyping();
+    addUser(text); input.value = ''; addTyping();
     const payloadText = buildAvoidPrefix(joints) + text;
     try {
       const res = await fetch('/chat', {
@@ -753,6 +753,7 @@
       if (!res.ok) throw new Error('Request failed (' + res.status + ')');
       const d = await res.json();
       rmTyping();
+      renderInjuriesLine(joints);
       addBot(d.response, d.route, d.confidence, d.workout);
       if (d.log_entry) recordLog(d.log_entry);
       if (d.workout) saveWorkout(d.workout);
