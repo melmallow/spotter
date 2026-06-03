@@ -289,6 +289,8 @@
   .injury-menu button { display: block; width: 100%; text-align: left; padding: 6px 10px; border: none; background: transparent; font-size: 13px; color: #2a3650; cursor: pointer; border-radius: 4px; }
   .injury-menu button:hover { background: rgba(120,145,185,0.10); }
   .injury-menu button:disabled { color: #aaa; cursor: default; }
+  .sys-line { margin: 10px 0 6px; display: flex; align-items: center; gap: 8px; color: #5d6b7e; font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; }
+  .sys-line::before, .sys-line::after { content: ''; flex: 1; height: 1px; background: rgba(120,145,185,0.25); }
   .composer { padding: 14px 18px 20px; border-top: 1px solid rgba(120,145,185,0.20); }
   .composer .field {
     display: flex; align-items: center; gap: 8px; background: #C3D2E8;
@@ -619,6 +621,22 @@
       : `${it.sets} sets`;
     return base + (it.rest_seconds != null ? ` · rest ${it.rest_seconds}s` : '');
   }
+  function titleOf(w){
+    const notes = ((w && w.notes) || '').trim();
+    return notes || 'Generated workout';
+  }
+  function relTime(iso){
+    const then = new Date(iso).getTime();
+    if (isNaN(then)) return '';
+    const sec = Math.max(1, Math.floor((Date.now() - then) / 1000));
+    if (sec < 60) return `${sec}s`;
+    const min = Math.floor(sec / 60);
+    if (min < 60) return `${min}m`;
+    const hr = Math.floor(min / 60);
+    if (hr < 24) return `${hr}h`;
+    const d = Math.floor(hr / 24);
+    return `${d}d`;
+  }
   function renderWorkoutCard(w){
     const blocks = Array.isArray(w.blocks) ? w.blocks : [];
     let count = 0; blocks.forEach(b => count += (b.items || []).length);
@@ -839,12 +857,9 @@
     renderWorkouts();
   }
 
-  function renderSavedWorkout(it){
-    const w = it.workout;
-    const blocks = Array.isArray(w.blocks) ? w.blocks : [];
-    let count = 0; blocks.forEach(b => count += (b.items || []).length);
-    const names = blocks.map(b => b.name).filter(Boolean).join(' · ');
-    const sub = w.notes ? esc(w.notes) : `${count} exercise${count===1?'':'s'} · ${esc(names)}`;
+  function renderWorkoutDetail(w){
+    const blocks = Array.isArray(w && w.blocks) ? w.blocks : [];
+    if (!blocks.length) return '';
     let body = '';
     blocks.forEach(b => {
       const items = b.items || [];
@@ -853,21 +868,93 @@
       items.forEach(ex => {
         const nm = esc(ex.exercise_name || 'Exercise')
           + (ex.side_note ? ` <span class="w-side">(${esc(ex.side_note)})</span>` : '');
-        body += `<div class="w-ex"><div class="w-name">${nm}</div><div class="w-pres">${esc(prescOf(ex))}</div></div>`;
+        const swap = escAttr(`Swap ${ex.exercise_name || 'this exercise'} for a different exercise`);
+        body += `<div class="w-ex">`
+          + `<div><div class="w-name">${nm}</div><div class="w-pres">${esc(prescOf(ex))}</div></div>`
+          + `<button class="wc-swap" data-modal-swap="${swap}">swap</button>`
+          + `</div>`;
       });
       body += `</div>`;
     });
+    return `<div class="w-blocks">${body}</div>`;
+  }
+
+  function renderSavedWorkoutRow(it){
+    const w = it.workout || {};
+    const blocks = Array.isArray(w.blocks) ? w.blocks : [];
+    let count = 0; blocks.forEach(b => count += (b.items || []).length);
+    const names = blocks.map(b => b.name).filter(Boolean).join('/');
+    const time = relTime(it.saved_at);
+    const sub = `${count} ex · ${esc(names || 'workout')}${time ? ` · ${time} ago` : ''}`;
     const removeIcon = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6 18 18M18 6 6 18"/></svg>`;
-    const startIcon = `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>`;
-    return `<div class="workout">`
+    return `<div class="workout-row" data-open="${escAttr(it.id)}">`
       + `<button class="x" data-remove="${escAttr(it.id)}" aria-label="Remove">${removeIcon}</button>`
-      + `<div class="w-title">Generated workout</div>`
-      + `<div class="w-sub">${sub}</div>`
-      + `<div class="w-blocks">${body}</div>`
+      + `<div class="row-title">${esc(titleOf(w))}</div>`
+      + `<div class="row-sub">${sub}</div>`
+      + `</div>`;
+  }
+
+  let _modalEscapeHandler = null;
+
+  function openWorkoutModal(id){
+    closeWorkoutModal();
+    const it = loadWorkouts().find(x => x.id === id);
+    if (!it) { console.warn('openWorkoutModal: workout not found', id); return; }
+    const w = it.workout || {};
+    const blocks = Array.isArray(w.blocks) ? w.blocks : [];
+    let count = 0; blocks.forEach(b => count += (b.items || []).length);
+    const names = blocks.map(b => b.name).filter(Boolean).join('/');
+    const sub = `${count} ex · ${esc(names || 'workout')}`;
+    const closeIcon = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6 18 18M18 6 6 18"/></svg>`;
+    const startIcon = `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>`;
+
+    const backdrop = document.createElement('div');
+    backdrop.className = 'modal-backdrop';
+    backdrop.innerHTML = `<div class="modal-card" role="dialog" aria-modal="true">`
+      + `<button class="x" data-modal-close="1" aria-label="Close">${closeIcon}</button>`
+      + `<div class="m-title">${esc(titleOf(w))}</div>`
+      + `<div class="m-sub">${sub}</div>`
+      + `<div class="m-divider"></div>`
+      + renderWorkoutDetail(w)
+      + `<div class="m-divider"></div>`
       + `<div class="w-row">`
-      + `<button class="w-start" data-ask="Start this workout">${startIcon}Start</button>`
-      + `<button class="w-log" data-ask="Log all the exercises from this workout">Log all</button>`
-      + `</div></div>`;
+      + `<button class="w-start" data-modal-ask="Start this workout">${startIcon}Start</button>`
+      + `<button class="w-log" data-modal-ask="Log all the exercises from this workout">Log all</button>`
+      + `</div>`
+      + `</div>`;
+
+    backdrop.addEventListener('click', (e) => {
+      if (e.target === backdrop) closeWorkoutModal();
+    });
+    backdrop.querySelectorAll('[data-modal-close]').forEach(b =>
+      b.addEventListener('click', closeWorkoutModal));
+    backdrop.querySelectorAll('[data-modal-ask]').forEach(b =>
+      b.addEventListener('click', () => {
+        const prompt = b.getAttribute('data-modal-ask');
+        closeWorkoutModal();
+        ask(prompt);
+      }));
+    backdrop.querySelectorAll('[data-modal-swap]').forEach(b =>
+      b.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const prompt = b.getAttribute('data-modal-swap');
+        closeWorkoutModal();
+        ask(prompt);
+      }));
+
+    _modalEscapeHandler = (e) => { if (e.key === 'Escape') closeWorkoutModal(); };
+    document.addEventListener('keydown', _modalEscapeHandler);
+
+    document.body.appendChild(backdrop);
+  }
+
+  function closeWorkoutModal(){
+    const existing = document.querySelector('.modal-backdrop');
+    if (existing) existing.remove();
+    if (_modalEscapeHandler) {
+      document.removeEventListener('keydown', _modalEscapeHandler);
+      _modalEscapeHandler = null;
+    }
   }
 
   function renderWorkouts(){
@@ -879,11 +966,14 @@
       return;
     }
     wrap.className = 'workouts';
-    wrap.innerHTML = items.map(renderSavedWorkout).join('');
-    wrap.querySelectorAll('[data-ask]').forEach(b =>
-      b.addEventListener('click', () => ask(b.getAttribute('data-ask'))));
+    wrap.innerHTML = items.map(renderSavedWorkoutRow).join('');
     wrap.querySelectorAll('[data-remove]').forEach(b =>
-      b.addEventListener('click', () => removeWorkout(b.getAttribute('data-remove'))));
+      b.addEventListener('click', (e) => {
+        e.stopPropagation();
+        removeWorkout(b.getAttribute('data-remove'));
+      }));
+    wrap.querySelectorAll('[data-open]').forEach(row =>
+      row.addEventListener('click', () => openWorkoutModal(row.getAttribute('data-open'))));
   }
 
   // --- Injuries to avoid (session-scoped, sessionStorage) --------------------
