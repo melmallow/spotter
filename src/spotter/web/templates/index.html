@@ -355,9 +355,9 @@
     </div>
     <div class="chatlog" id="log"></div>
     <div class="chips">
-      <button class="chip" onclick="ask('What muscles does a Romanian deadlift work?')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s-7-4.35-9.5-9A5 5 0 0 1 12 6a5 5 0 0 1 9.5 6c-2.5 4.65-9.5 9-9.5 9z"/></svg>Coach</button>
+      <button class="chip" onclick="askCoach()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s-7-4.35-9.5-9A5 5 0 0 1 12 6a5 5 0 0 1 9.5 6c-2.5 4.65-9.5 9-9.5 9z"/></svg>Coach</button>
       <button class="chip" onclick="askGenerate()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m12 3 2.5 5.5L20 9l-4 4 1 6-5-3-5 3 1-6-4-4 5.5-.5z"/></svg>Generate</button>
-      <button class="chip" onclick="ask('I just did 3x10 bench press at 185 lbs')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg>Log</button>
+      <button class="chip" onclick="askLog()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg>Log</button>
     </div>
     <div class="composer">
       <form class="field" id="form" onsubmit="return submitMsg(event)">
@@ -529,6 +529,32 @@
     el.querySelectorAll('[data-ask]').forEach(b =>
       b.addEventListener('click', () => ask(b.getAttribute('data-ask'))));
     log.appendChild(el); scroll();
+  }
+
+  function askCoach(){
+    const topics = [
+      { label: 'Muscles worked',  prompt: 'Explain what muscles the main barbell lifts work — squat, bench, deadlift, and overhead press.' },
+      { label: 'Form cues',       prompt: 'Walk me through the key form cues for the squat, bench press, and deadlift.' },
+      { label: 'Common mistakes', prompt: 'What are the most common form mistakes on the big compound lifts?' },
+      { label: 'Progression',     prompt: 'How should I structure my strength training progression over time?' }
+    ];
+    const el = document.createElement('div');
+    el.className = 'msg bot';
+    const chipsHtml = topics.map(t =>
+      `<button class="chip" data-ask="${escAttr(t.prompt)}">${esc(t.label)}</button>`).join('');
+    el.innerHTML = `<div class="bubble">What can I help with?</div>`
+      + `<div class="chips" style="padding: 8px 0 0;">${chipsHtml}</div>`;
+    el.querySelectorAll('[data-ask]').forEach(b =>
+      b.addEventListener('click', () => ask(b.getAttribute('data-ask'))));
+    log.appendChild(el); scroll();
+  }
+
+  function askLog(){
+    const el = document.createElement('div');
+    el.className = 'msg bot';
+    el.innerHTML = `<div class="bubble">What did you do? Tell me the exercise, sets, reps, and weight — e.g. <em>"3x10 bench at 185"</em>.</div>`;
+    log.appendChild(el); scroll();
+    input.focus();
   }
   function submitMsg(e){ e.preventDefault(); const v = input.value.trim(); if (v) send(v); return false; }
 
