@@ -6,9 +6,11 @@ import time
 from typing import Any
 
 from langchain_core.language_models.chat_models import BaseChatModel
+from langchain_core.messages import SystemMessage
 from langgraph.graph import END, START, StateGraph
 
-from spotter.config import CONFIDENCE_THRESHOLD
+from spotter.config import CONFIDENCE_THRESHOLD, MAX_HISTORY_TURNS
+from spotter.conversations import trim_history
 from spotter.llm import chat_model
 from spotter.logging_setup import get_logger
 from spotter.schemas import HubState, RouteDecision
@@ -34,14 +36,23 @@ Be honest about ambiguity — a confidence below 0.6 triggers a clarification fl
 
 def _classify(state: HubState, *, model: BaseChatModel) -> dict[str, Any]:
     """Single router node. Caller injects the model so tests can stub it."""
-    user_input = state["user_input"]
+    messages = state.get("messages") or []
+    if not messages:
+        # Defensive: callers should always pass a HumanMessage. Treat as UNKNOWN.
+        return {
+            "route": "UNKNOWN",
+            "confidence": 0.0,
+            "route_reasoning": "no messages on state",
+            "clarification_needed": True,
+        }
+    trimmed = trim_history(messages, MAX_HISTORY_TURNS)
     structured = model.with_structured_output(RouteDecision)
     started = time.perf_counter()
     try:
         decision: RouteDecision = structured.invoke(
             [
-                ("system", ROUTER_SYSTEM_PROMPT),
-                ("human", user_input),
+                SystemMessage(content=ROUTER_SYSTEM_PROMPT),
+                *trimmed,
             ]
         )
     except Exception as exc:
