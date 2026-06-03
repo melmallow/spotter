@@ -492,15 +492,15 @@
 
     <div class="section-h"><h2>Quick actions</h2></div>
     <div class="actions">
-      <button class="action" onclick="ask('What muscles does a Romanian deadlift work?')">
+      <button class="action" onclick="setView('chat'); askCoach()">
         <span class="qa-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-4.35-9.5-9A5 5 0 0 1 12 6a5 5 0 0 1 9.5 6c-2.5 4.65-9.5 9-9.5 9z"/></svg></span>
         <span class="qa-label">Coach a movement</span>
       </button>
-      <button class="action" onclick="ask('Build me a 30-minute upper body workout with dumbbells')">
+      <button class="action" onclick="setView('chat'); askGenerate()">
         <span class="qa-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 2.5 5.5L20 9l-4 4 1 6-5-3-5 3 1-6-4-4 5.5-.5z"/></svg></span>
         <span class="qa-label">Generate a workout</span>
       </button>
-      <button class="action" onclick="ask('I just did 3x10 bench press at 185 lbs')">
+      <button class="action" onclick="setView('chat'); askLog()">
         <span class="qa-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>
         <span class="qa-label">Log a set</span>
       </button>
